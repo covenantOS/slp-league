@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import config from '../data/config.json';
-import season from '../data/season.json';
+import { getGame } from '../lib/league.mjs';
 
 interface Props {
   title?: string;
@@ -12,6 +12,7 @@ const { title, description, active } = Astro.props;
 const league = config.league;
 const pageTitle = title ? `${title} | ${league.name}` : `${league.name} — ${league.tagline}`;
 const desc = description ?? league.tagline;
+const season = (await getGame(Astro.locals?.runtime?.env)).season;
 
 const nav = [
   { key: 'standings', href: '/', label: 'Standings', icon: 'trophy' },

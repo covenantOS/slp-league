@@ -1,11 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
-import { activityFeed, data } from '../lib/league.mjs';
+import { getGame, activityFeed } from '../lib/league.mjs';
 import { ramp, signed, shortDate } from '../lib/format.mjs';
-import config from '../data/config.json';
 
-const feed = activityFeed(data);
-const rubric = Object.fromEntries(config.rubric.map((c) => [c.key, c])) as Record<string, any>;
+const game = await getGame(Astro.locals?.runtime?.env);
+const feed = activityFeed(game);
+const rubric = Object.fromEntries(game.config.rubric.map((c: any) => [c.key, c])) as Record<string, any>;
 
 type Group = { date: string; items: any[] };
 const groups: Group[] = [];

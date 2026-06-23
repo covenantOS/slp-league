@@ -1,0 +1,256 @@
+---
+import '../../styles/global.css';
+// Standalone control panel. All interaction is client-side against /api/*.
+// The password (4221) is enforced server-side on every write in /api/mutate.
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>SLP League — Control room</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style is:global>
+      .gate { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; }
+      .gate-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; width: 320px; text-align: center; }
+      .gate-card h1 { font-size: 26px; margin-bottom: 4px; }
+      .gate-card p { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+      .gate-card input { width: 100%; height: 48px; text-align: center; font-size: 22px; letter-spacing: 6px; font-family: var(--font-display); background: var(--bg); color: var(--text); border: 1px solid var(--line-2); border-radius: var(--radius-sm); }
+      .gate-card button { margin-top: 14px; width: 100%; height: 44px; background: var(--pitch); color: var(--pitch-ink); border: 0; border-radius: var(--radius-sm); font-family: var(--font-display); font-weight: 600; font-size: 16px; cursor: pointer; }
+      .gate-err { color: var(--red); font-size: 13px; min-height: 18px; margin-top: 8px; }
+
+      .panel { max-width: 1040px; margin: 0 auto; padding: 18px; }
+      .hbar { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 16px; }
+      .hbar .lbl { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1.4px; display: block; }
+      .hbar b { font-family: var(--font-display); font-size: 20px; }
+      .hbtns { margin-left: auto; display: flex; gap: 8px; }
+      .topbrand { display: flex; align-items: center; gap: 9px; font-family: var(--font-display); font-weight: 600; font-size: 18px; margin-bottom: 14px; }
+      .topbrand a { color: var(--muted); font-size: 13px; font-family: var(--font-body); margin-left: auto; }
+      .topbrand a:hover { color: var(--pitch); }
+
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+      .pcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+      .pc-h { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+      .pc-id { font-size: 15px; }
+      .pc-id b { font-family: var(--font-display); font-size: 20px; }
+      .pc-id .tier { font-size: 11px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 999px; padding: 2px 8px; margin-left: 4px; }
+      .pc-d { text-align: right; }
+      .pc-d b { font-family: var(--font-display); font-size: 26px; color: var(--gold); }
+      .pc-d span { display: block; font-size: 11px; color: var(--muted); }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+      .chip-btn { font-family: var(--font-body); font-size: 12px; border-radius: 999px; padding: 5px 9px; cursor: pointer; border: 1px solid var(--line-2); background: var(--bg); color: var(--text); display: inline-flex; align-items: center; gap: 5px; line-height: 1.3; }
+      .chip-btn b { font-family: var(--font-display); }
+      .chip-btn.earn { border-color: rgba(32, 196, 95, 0.4); }
+      .chip-btn.earn b { color: var(--pitch); }
+      .chip-btn.lose { border-color: rgba(255, 106, 94, 0.4); }
+      .chip-btn.lose b { color: var(--red); }
+      .chip-btn:hover { background: var(--surface-2); }
+      .custom { display: flex; gap: 6px; margin-top: 4px; }
+      .custom input { height: 34px; background: var(--bg); border: 1px solid var(--line-2); color: var(--text); border-radius: var(--radius-sm); padding: 0 9px; font-size: 13px; }
+      .custom .c-amt { width: 58px; }
+      .custom .c-rsn { flex: 1; min-width: 0; }
+      .mini { height: 34px; padding: 0 12px; border-radius: var(--radius-sm); border: 1px solid var(--line-2); background: var(--surface-2); color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; }
+      .mini.earn { background: var(--pitch); color: var(--pitch-ink); border: 0; }
+      .mini.lose { background: var(--red); color: #2b0a07; border: 0; }
+      .mini.danger { color: var(--red); }
+
+      .feedwrap { margin-top: 18px; }
+      .feedwrap h2 { font-size: 18px; margin-bottom: 10px; }
+      .feed { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+      .frow { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
+      .frow + .frow { border-top: 1px solid var(--line); }
+      .f-main { flex: 1; min-width: 0; font-size: 14px; }
+      .f-main b { font-family: var(--font-display); margin-right: 6px; }
+      .f-sub { color: var(--faint); font-size: 12px; margin-left: 8px; }
+      .f-pts { font-family: var(--font-display); font-weight: 600; font-size: 17px; min-width: 42px; text-align: right; }
+      .f-pts.pos { color: var(--pitch); }
+      .f-pts.neg { color: var(--red); }
+      .f-del { background: none; border: 0; color: var(--faint); font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px; }
+      .f-del:hover { color: var(--red); }
+
+      @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="gate" id="gate">
+      <form class="gate-card" id="gate-form">
+        <h1>Control room</h1>
+        <p>Enter the code to run the league.</p>
+        <input id="gate-input" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="code" autofocus />
+        <div class="gate-err" id="gate-err"></div>
+        <button type="submit">Enter</button>
+      </form>
+    </div>
+
+    <div class="panel" id="panel" style="display:none">
+      <div class="topbrand"><span>SLP League · control room</span><a href="/">View the board</a></div>
+      <div id="hdr"></div>
+      <div class="grid" id="players"></div>
+      <div class="feedwrap">
+        <h2>Recent activity</h2>
+        <div class="feed" id="feed"></div>
+      </div>
+    </div>
+
+    <script is:inline>
+      (function () {
+        var PW_KEY = 'slp_pw';
+        var $ = function (s) { return document.querySelector(s); };
+        var money = function (n) { return '$' + Math.round(n).toLocaleString('en-US'); };
+        var signed = function (n) { return (n > 0 ? '+' : '') + Math.round(n); };
+        var STATE = null;
+        var pw = function () { return sessionStorage.getItem(PW_KEY) || ''; };
+
+        // Safe element builder: text/attributes only, never HTML strings.
+        function el(tag, attrs, kids) {
+          var n = document.createElement(tag);
+          attrs = attrs || {};
+          Object.keys(attrs).forEach(function (k) {
+            if (k === 'text') n.textContent = attrs[k];
+            else n.setAttribute(k, attrs[k]);
+          });
+          (kids || []).forEach(function (c) {
+            if (c == null) return;
+            n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+          });
+          return n;
+        }
+
+        async function loadState() {
+          var res = await fetch('/api/state.json');
+          STATE = await res.json();
+          render();
+        }
+        async function mutate(payload) {
+          payload.pw = pw();
+          var res = await fetch('/api/mutate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+          var data = await res.json();
+          if (!res.ok) { alert(data.error || 'Something went wrong'); return null; }
+          STATE = data.state;
+          render();
+          return data;
+        }
+
+        function header() {
+          return el('div', { class: 'hbar' }, [
+            el('div', null, [el('span', { class: 'lbl', text: 'Pot' }), el('b', { text: money(STATE.pot) })]),
+            el('div', null, [el('span', { class: 'lbl', text: 'Bank left' }), el('b', { text: money(STATE.bank) })]),
+            el('div', null, [el('span', { class: 'lbl', text: 'Season' }), el('b', { text: STATE.season.name }), ' · ' + STATE.daysLeft + 'd left']),
+            el('div', { class: 'hbtns' }, [
+              el('button', { class: 'mini', 'data-act': 'setpot', text: 'Set pot' }),
+              el('button', { class: 'mini danger', 'data-act': 'reset', text: 'Reset season' }),
+            ]),
+          ]);
+        }
+        function chip(p, c) {
+          return el('button', {
+            class: 'chip-btn ' + (c.type === 'earn' ? 'earn' : 'lose'),
+            'data-act': 'award', 'data-player': p.id, 'data-points': c.points, 'data-cat': c.key, 'data-label': c.label,
+          }, [el('b', { text: (c.points > 0 ? '+' : '') + c.points }), ' ' + c.label]);
+        }
+        function playerCard(p) {
+          var earn = STATE.config.rubric.filter(function (c) { return c.type === 'earn'; });
+          var lose = STATE.config.rubric.filter(function (c) { return c.type === 'lose'; });
+          return el('div', { class: 'pcard', 'data-card': '' }, [
+            el('div', { class: 'pc-h' }, [
+              el('div', { class: 'pc-id' }, ['#' + p.rank + ' ', el('b', { text: p.nickname }), el('span', { class: 'tier', text: p.tier.name })]),
+              el('div', { class: 'pc-d' }, [el('b', { text: money(p.dollars) }), el('span', { text: p.points + ' pts' })]),
+            ]),
+            el('div', { class: 'chips' }, earn.map(function (c) { return chip(p, c); })),
+            el('div', { class: 'chips' }, lose.map(function (c) { return chip(p, c); })),
+            el('div', { class: 'custom' }, [
+              el('input', { class: 'c-amt', type: 'number', placeholder: 'pts' }),
+              el('input', { class: 'c-rsn', type: 'text', placeholder: 'reason' }),
+              el('button', { class: 'mini earn', 'data-act': 'custom', 'data-sign': '+', 'data-player': p.id, text: 'Award' }),
+              el('button', { class: 'mini lose', 'data-act': 'custom', 'data-sign': '-', 'data-player': p.id, text: 'Dock' }),
+            ]),
+          ]);
+        }
+        function feedNodes() {
+          var all = [];
+          STATE.players.forEach(function (p) { p.history.forEach(function (h) { all.push({ id: h.id, date: h.date, reason: h.reason, applied: h.applied, nick: p.nickname }); }); });
+          all.sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? 1 : -1; });
+          if (!all.length) return [el('div', { class: 'frow' }, [el('div', { class: 'f-main', style: 'color:var(--muted)', text: 'No activity yet.' })])];
+          return all.slice(0, 18).map(function (h) {
+            return el('div', { class: 'frow' }, [
+              el('div', { class: 'f-main' }, [el('b', { text: h.nick }), h.reason + ' ', el('span', { class: 'f-sub', text: h.date })]),
+              el('div', { class: 'f-pts ' + (h.applied >= 0 ? 'pos' : 'neg'), text: signed(h.applied) }),
+              el('button', { class: 'f-del', 'data-act': 'del', 'data-id': h.id, title: 'Delete', text: '×' }),
+            ]);
+          });
+        }
+        function render() {
+          if (!STATE) return;
+          $('#hdr').replaceChildren(header());
+          $('#players').replaceChildren.apply($('#players'), STATE.players.map(playerCard));
+          $('#feed').replaceChildren.apply($('#feed'), feedNodes());
+        }
+
+        $('#panel').addEventListener('click', async function (e) {
+          var t = e.target.closest('[data-act]');
+          if (!t) return;
+          var act = t.dataset.act;
+          if (act === 'award') {
+            await mutate({ action: 'award', playerId: t.dataset.player, points: +t.dataset.points, category: t.dataset.cat, reason: t.dataset.label });
+            burst(+t.dataset.points);
+          } else if (act === 'custom') {
+            var card = t.closest('[data-card]');
+            var amt = Math.abs(+card.querySelector('.c-amt').value || 0);
+            if (!amt) return;
+            var rsn = card.querySelector('.c-rsn').value;
+            var sign = t.dataset.sign === '-' ? -1 : 1;
+            await mutate({ action: 'award', playerId: t.dataset.player, points: sign * amt, category: 'manual', reason: rsn || 'Manual adjustment' });
+            burst(sign);
+            card.querySelector('.c-amt').value = '';
+            card.querySelector('.c-rsn').value = '';
+          } else if (act === 'del') {
+            if (confirm('Delete this entry?')) await mutate({ action: 'delete', id: t.dataset.id });
+          } else if (act === 'reset') {
+            if (confirm('Reset the season? This clears every point back to 100 for everyone.')) await mutate({ action: 'reset' });
+          } else if (act === 'setpot') {
+            var v = prompt('New pot size in dollars:', STATE.pot);
+            if (v) await mutate({ action: 'setPot', potUSD: +v });
+          }
+        });
+
+        $('#gate-form').addEventListener('submit', function (e) {
+          e.preventDefault();
+          var v = $('#gate-input').value.trim();
+          if (v === '4221') { sessionStorage.setItem(PW_KEY, '4221'); unlock(); }
+          else { $('#gate-err').textContent = 'Nope.'; $('#gate-input').value = ''; }
+        });
+
+        function unlock() {
+          $('#gate').style.display = 'none';
+          $('#panel').style.display = 'block';
+          loadState();
+        }
+
+        function burst(sign) {
+          if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          var colors = sign >= 0 ? ['#f6b400', '#20c45f', '#4f9dec'] : ['#ff6a5e', '#a32d2d'];
+          var c = document.createElement('canvas');
+          c.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:999';
+          c.width = window.innerWidth; c.height = window.innerHeight;
+          document.body.appendChild(c);
+          var ctx = c.getContext('2d'), parts = [];
+          for (var i = 0; i < 28; i++) parts.push({ x: window.innerWidth / 2, y: window.innerHeight * 0.3, vx: (Math.random() - 0.5) * 8, vy: Math.random() * -7 - 2, r: 3 + Math.random() * 4, col: colors[i % colors.length] });
+          var start = performance.now();
+          (function frame(t) {
+            var dt = t - start; ctx.clearRect(0, 0, c.width, c.height);
+            parts.forEach(function (p) { p.vy += 0.22; p.x += p.vx; p.y += p.vy; ctx.globalAlpha = Math.max(0, 1 - dt / 1400); ctx.fillStyle = p.col; ctx.fillRect(p.x, p.y, p.r, p.r); });
+            if (dt < 1500) requestAnimationFrame(frame); else c.remove();
+          })(start);
+        }
+
+        if (pw() === '4221') unlock();
+      })();
+    </script>
+  </body>
+</html>

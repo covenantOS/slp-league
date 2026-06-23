@@ -2,14 +2,15 @@
 import Base from '../layouts/Base.astro';
 import PotBar from '../components/PotBar.astro';
 import StandingRow from '../components/StandingRow.astro';
-import { getState, activityFeed, data } from '../lib/league.mjs';
+import { getGame, computeState, activityFeed } from '../lib/league.mjs';
 import { money, signed, shortDate, ramp } from '../lib/format.mjs';
 import config from '../data/config.json';
 
-const state = getState();
+const game = await getGame(Astro.locals?.runtime?.env);
+const state = computeState(game);
 const leader = state.players[0];
-const recent = activityFeed(data, 5);
-const ch = config.challenge;
+const recent = activityFeed(game, 5);
+const ch = game.config.challenge;
 const seasonPct = Math.round(state.seasonProgress * 100);
 ---
 
@@ -18,7 +19,7 @@ const seasonPct = Math.round(state.seasonProgress * 100);
     <div class="eyebrow">{config.league.tagline}</div>
     <h1>Standings</h1>
     <div class="hero-meta">
-      <span><i class="ti ti-calendar-event" aria-hidden="true"></i> {state.daysLeft} days left in {data.season.name}</span>
+      <span><i class="ti ti-calendar-event" aria-hidden="true"></i> {state.daysLeft} days left in {game.season.name}</span>
       <span class="sep">&middot;</span>
       <span><i class="ti ti-crown" style="color:var(--gold)" aria-hidden="true"></i> {leader.nickname} leads with {money(leader.dollars)}</span>
     </div>

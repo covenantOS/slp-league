@@ -2,7 +2,7 @@
 
 A gamified, public scoreboard for the ServiceLine Pro team's entrepreneur-points
 bonus program. One shared pot, one season, soccer-league styling. Built with Astro,
-deployed on Cloudflare Pages, with a daily Slack "Matchday" drop.
+served on Cloudflare Pages, with live data in a Cloudflare KV store.
 
 Players: **Miggy** (Miguel), **Daniboy** (Daniel), **Kdawg** (Kevin).
 
@@ -15,8 +15,8 @@ There is **one shared bank of $2,500** for the season. Everyone starts at **100 
 - **1 point = $1.** Whatever you are holding when the season ends is what you get paid.
 - Points held by all players + the bank always equals exactly **$2,500**. One player can take almost the whole thing.
 
-This makes it genuinely competitive: every point one player claims is a point the others
-can't have, and a penalty literally hands money back to the pot.
+Every point one player claims is a point the others can't have, and a penalty literally
+hands money back to the pot.
 
 ### The rubric (tunable in `src/data/config.json`)
 
@@ -35,82 +35,75 @@ can't have, and a penalty literally hands money back to the pot.
 Divisions by points held: **Reserve** (0+) → **Starter** (150+) → **Playmaker** (300+) →
 **Star** (500+) → **Legend** (750+). Badges: Golden Boot, On Fire, Clean Sheet, Comeback, Top Flight.
 
+## Running the league: the control room
+
+Go to **`/admin`**, enter the code **`4221`**, and you get a control panel:
+
+- Tap a green chip to award points or a red chip to dock them, per player.
+- Or type any custom amount + reason and hit Award / Dock.
+- Delete any entry, reset the season, or change the pot size.
+
+Every change updates the public board instantly for the whole team. The code is checked on
+the server for every write, so the board can't be edited without it. (It is a low-stakes
+internal tool; the code is light protection, not a vault.)
+
+## How the data works
+
+Live game state (season, players, events) lives in one **Cloudflare KV** value (binding
+`LEAGUE`), seeded from `src/data/*.json` on first run. Pages read it at request time and
+compute standings with the pure engine in `src/lib/engine.mjs`. The rules (rubric, tiers,
+badges, challenge) always come from `src/data/config.json` in code.
+
 ## Project structure
 
 ```
 src/
-  data/        season.json, players.json, events.json, config.json  (all the data)
-  lib/         engine.mjs (scoring), format.mjs, league.mjs (loader)
+  data/        season.json, players.json, events.json (seed) + config.json (rules)
+  lib/         engine.mjs (scoring), store.mjs (KV/in-memory), league.mjs, format.mjs
   components/  PotBar, StandingRow, Badge, Sparkline
   layouts/     Base.astro
-  pages/       index (standings), players/[id], history, rules
-scripts/       slack-matchday.mjs, snapshot.mjs, test-engine.mjs
-public/admin/  Sveltia CMS (git-based point editor)
-.github/workflows/matchday.yml   daily Slack + snapshot cron
+  pages/       index, players/[id], players/index, history, rules
+  pages/admin/ index.astro                the control room (code 4221)
+  pages/api/   mutate.js, state.json.js    read/write the KV game
+scripts/       test-engine.mjs
 ```
 
-The scoring engine is pure and shared by the site and the Slack script. The bank
-invariant (`held + bank === pot`) is enforced by processing events chronologically and
-clamping, so an over-award can never mint money beyond the pot.
+The bank invariant (`held + bank === pot`) is enforced by processing events
+chronologically and clamping, so an over-award can never mint money beyond the pot.
 
 ## Local development
 
 ```bash
 npm install
-npm run dev          # http://localhost:4321
-npm run build        # static output to dist/
-npm run test:engine  # sanity-check the scoring math and invariants
-npm run matchday     # dry-run the Slack message (prints the payload)
+npm run dev          # http://localhost:4321  (in-memory store, no KV needed)
+npm run build
+npm run test:engine  # checks the scoring math and invariants
 ```
 
-## Logging points
-
-Three ways, pick whatever is easiest:
-
-1. **Admin UI** at `/admin/` — a form (pick player, pick category, set points, type a reason).
-   Saving commits to the repo and the site rebuilds. Requires the one-time GitHub OAuth setup below.
-2. **Edit `src/data/events.json` on GitHub** directly (the web editor). No setup needed.
-3. **Edit the file locally** and push.
-
-Each event is `{ date, playerId, points, category, reason }`; `by` (who awarded it, defaults to
-William) and `id` are optional. Points are positive to earn, negative to penalize. Events dated in
-the future stay dormant until that date arrives.
+In `astro dev` there is no KV binding, so the store falls back to an in-memory copy seeded
+from `src/data`. Changes persist for the life of the dev process. Production uses KV.
 
 ## Deploy to Cloudflare Pages
 
-1. Push this repo to GitHub (done if you're reading this there).
-2. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git → pick `slp-league`.
-3. Build settings: framework preset **Astro**, build command `npm run build`, output directory `dist`.
-4. Deploy. Cloudflare rebuilds automatically on every push (including the daily snapshot commit).
+1. Push this repo to GitHub.
+2. Cloudflare dashboard: Workers & Pages → Create → Pages → Connect to Git → pick `slp-league`.
+   Framework preset **Astro**, build command `npm run build`, output directory `dist`.
+3. Create a KV namespace: Workers & Pages → KV → Create namespace (e.g. `slp-league`).
+4. Bind it: your Pages project → Settings → Bindings (Functions) → KV namespace bindings →
+   add variable name **`LEAGUE`** pointing at that namespace.
+5. Redeploy. The store seeds itself from `src/data` on the first request.
 
 Update `site` in `astro.config.mjs` to the final URL once you have it.
 
-## Daily Slack "Matchday" drop
-
-1. In Slack, create an Incoming Webhook for the channel you want (Slack → Apps → Incoming Webhooks).
-2. In GitHub repo Settings → Secrets and variables → Actions:
-   - Secret `SLACK_WEBHOOK_URL` = the webhook URL.
-   - Variable `SITE_URL` = your deployed URL.
-3. The `Matchday` workflow runs daily at 13:00 UTC. Trigger it manually anytime from the Actions tab.
-
-The workflow also commits a daily snapshot, which keeps the live site's streaks and
-"days left" current and powers day-over-day movement.
-
-## Admin OAuth (one-time, optional)
-
-The `/admin/` editor uses Sveltia CMS with a GitHub backend. To enable login, register a
-GitHub OAuth app and point an auth handler at it (Sveltia's docs cover a Cloudflare Pages
-function for this). Until that's set up, use option 2 above to log points. `repo:` in
-`public/admin/config.yml` is currently `covenantOS/slp-league` — change it if the repo moves.
-
 ## Starting a new season
 
-1. Pay out the current standings.
-2. In `src/data/season.json` bump `id`/`name`, set new `startDate`/`endDate`.
-3. Empty `src/data/events.json` to `{ "events": [] }` and delete `src/data/snapshots.json`.
-4. Commit. Everyone resets to 100 and the bank refills to $2,500.
+Open `/admin` and hit **Reset season** (clears every point back to 100, refills the bank).
+Use **Set pot** there to change the pot. To rename the season or change its dates, edit the
+defaults in `src/data/season.json` and reset.
 
-## Tuning
+## Tuning the rules
 
-Everything lives in `src/data/config.json`: point values, tier thresholds, badge
-definitions, and the weekly challenge. The pot size and seed are in `season.json`.
+Point values, tier thresholds, badges, and the weekly challenge live in
+`src/data/config.json`; pot size and seed in `src/data/season.json`. These are read from
+code, so edit and redeploy to apply. The live season, players, and events live in KV and are
+managed from `/admin`.

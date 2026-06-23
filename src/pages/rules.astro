@@ -1,15 +1,16 @@
 ---
 import Base from '../layouts/Base.astro';
-import { data } from '../lib/league.mjs';
+import { getGame } from '../lib/league.mjs';
 import { money } from '../lib/format.mjs';
-import config from '../data/config.json';
 
-const earn = config.rubric.filter((c) => c.type === 'earn');
-const lose = config.rubric.filter((c) => c.type === 'lose');
+const game = await getGame(Astro.locals?.runtime?.env);
+const config = game.config;
+const earn = config.rubric.filter((c: any) => c.type === 'earn');
+const lose = config.rubric.filter((c: any) => c.type === 'lose');
 const tiers = [...config.tiers].reverse();
 const badges = Object.entries(config.badges) as [string, any][];
-const pot = money(data.season.potUSD);
-const seed = data.season.seedPoints;
+const pot = money(game.season.potUSD);
+const seed = game.season.seedPoints;
 ---
 
 <Base title="How it works" active="rules">

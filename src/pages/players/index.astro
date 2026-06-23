@@ -1,10 +1,10 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Badge from '../../components/Badge.astro';
-import { getState } from '../../lib/league.mjs';
+import { getGame, computeState } from '../../lib/league.mjs';
 import { ramp, money, signed } from '../../lib/format.mjs';
 
-const state = getState();
+const state = computeState(await getGame(Astro.locals?.runtime?.env));
 ---
 
 <Base title="Players" active="players">

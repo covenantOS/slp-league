@@ -2,20 +2,17 @@
 import Base from '../../layouts/Base.astro';
 import Badge from '../../components/Badge.astro';
 import Sparkline from '../../components/Sparkline.astro';
-import { getState, data } from '../../lib/league.mjs';
+import { getGame, computeState } from '../../lib/league.mjs';
 import { ramp, money, signed, shortDate } from '../../lib/format.mjs';
-import config from '../../data/config.json';
 
-export function getStaticPaths() {
-  return data.players.map((p) => ({ params: { id: p.id } }));
-}
 const { id } = Astro.params;
-const state = getState();
+const game = await getGame(Astro.locals?.runtime?.env);
+const state = computeState(game);
 const p = state.players.find((x: any) => x.id === id);
-if (!p) throw new Error(`Unknown player: ${id}`);
+if (!p) return Astro.redirect('/players/');
 const r = ramp(p.color);
-const rubric = Object.fromEntries(config.rubric.map((c) => [c.key, c])) as Record<string, any>;
-const seed = data.season.seedPoints;
+const rubric = Object.fromEntries(game.config.rubric.map((c: any) => [c.key, c])) as Record<string, any>;
+const seed = game.season.seedPoints;
 const series = [seed, ...p.history.map((h: any) => h.balanceAfter)];
 const hist = [...p.history].reverse();
 const share = Math.round((p.points / state.pot) * 100);
