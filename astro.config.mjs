@@ -8,5 +8,6 @@ export default defineConfig({
   site: 'https://slp-league.pages.dev',
   trailingSlash: 'ignore',
   output: 'server',
-  adapter: cloudflare(),
+  // platformProxy gives `astro dev` the local D1 + R2 bindings from wrangler.toml.
+  adapter: cloudflare({ platformProxy: { enabled: true } }),
 });

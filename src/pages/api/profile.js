@@ -27,12 +27,19 @@ export async function POST({ request, locals }) {
   // Authenticated for this player - apply the edits.
   if (typeof b.tagline === 'string') p.tagline = b.tagline.slice(0, 80);
   if (b.avatar === null) {
+    if (p.avatar && env && env.BUCKET) await env.BUCKET.delete(p.avatar);
     p.avatar = null;
   } else if (typeof b.avatar === 'string') {
-    if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(b.avatar) || b.avatar.length > 400000) {
-      return json({ error: 'image must be a small PNG/JPEG/WebP' }, 400);
-    }
-    p.avatar = b.avatar;
+    const m = b.avatar.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/);
+    if (!m || b.avatar.length > 600000) return json({ error: 'image must be a small PNG/JPEG/WebP' }, 400);
+    if (!env || !env.BUCKET) return json({ error: 'photo storage is not connected' }, 503);
+    const bin = atob(m[2]);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const key = `avatars/${p.id}.jpg`;
+    await env.BUCKET.put(key, bytes, { httpMetadata: { contentType: 'image/' + m[1] } });
+    p.avatar = key;
+    p.avatarV = (p.avatarV || 0) + 1;
   }
   if (b.newCode !== undefined) {
     if (!isCode(b.newCode)) return json({ error: 'new code must be 4 to 8 digits' }, 400);

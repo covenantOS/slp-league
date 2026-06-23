@@ -2,7 +2,7 @@
 import '../../styles/global.css';
 // Standalone control panel. All interaction is client-side against /api/*.
 // The password (4221) is enforced server-side on every write in /api/mutate.
-const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
+const persistent = !!(Astro.locals?.runtime?.env?.DB);
 ---
 
 <!doctype html>
@@ -81,7 +81,7 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
     </style>
   </head>
   <body>
-    {!persistent && <div class="warnbar">Changes are not being saved. This is local preview, or the <b>LEAGUE</b> KV namespace is not bound on Cloudflare. Bind it and redeploy.</div>}
+    {!persistent && <div class="warnbar">Changes are not being saved (no database connected). This is normal in local preview without the Cloudflare bindings.</div>}
     <div class="gate" id="gate">
       <form class="gate-card" id="gate-form">
         <h1>Control room</h1>
@@ -128,7 +128,7 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
 
         var ARAMP = { blue: { fill: '#85B7EB', ink: '#042C53' }, teal: { fill: '#5DCAA5', ink: '#04342C' }, coral: { fill: '#F0997B', ink: '#4A1B0C' }, amber: { fill: '#EF9F27', ink: '#412402' }, purple: { fill: '#7F77DD', ink: '#26215C' }, gray: { fill: '#B4B2A9', ink: '#2C2C2A' } };
         function avatarNode(p) {
-          if (p.avatar) return el('img', { class: 'pc-av', src: p.avatar, alt: p.nickname });
+          if (p.avatar) return el('img', { class: 'pc-av', src: '/img/' + p.avatar + '?v=' + (p.avatarV || 0), alt: p.nickname });
           var r = ARAMP[p.color] || ARAMP.gray;
           return el('div', { class: 'pc-av pc-av-ini', style: 'background:' + r.fill + ';color:' + r.ink, text: p.initials });
         }

@@ -17,7 +17,7 @@ const fontSize = Math.round(size * 0.36);
   {
     player.avatar && (
       <img
-        src={player.avatar}
+        src={`/img/${player.avatar}?v=${player.avatarV ?? 0}`}
         alt={player.nickname}
         class="av-img"
         style={`${dim};object-fit:cover;position:absolute;inset:0;display:block;background:${r.fill}`}

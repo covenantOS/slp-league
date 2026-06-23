@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "deploy": "astro build && wrangler deploy",
+    "preview": "wrangler dev",
+    "db:schema": "wrangler d1 execute slp-league --remote --file schema.sql",
     "test:engine": "node scripts/test-engine.mjs"
   },
   "dependencies": {

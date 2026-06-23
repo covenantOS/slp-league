@@ -1,6 +1,6 @@
 ---
 import '../../styles/global.css';
-const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
+const persistent = !!(Astro.locals?.runtime?.env?.DB);
 ---
 
 <!doctype html>
@@ -56,7 +56,7 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
     </style>
   </head>
   <body>
-    {!persistent && <div class="warnbar">Changes are not being saved. This is local preview, or the <b>LEAGUE</b> KV namespace is not bound on Cloudflare.</div>}
+    {!persistent && <div class="warnbar">Changes are not being saved (no database connected). This is normal in local preview without the Cloudflare bindings.</div>}
     <div class="me-top"><a href="/">&larr; Board</a><span>My profile</span></div>
     <div class="me-wrap" id="app"></div>
 
@@ -84,7 +84,9 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
           return n;
         }
         function avatarNode(player, cls, previewSrc) {
-          var src = previewSrc !== undefined ? previewSrc : player.avatar;
+          var src;
+          if (previewSrc !== undefined) src = previewSrc;
+          else if (player.avatar) src = '/img/' + player.avatar + '?v=' + (player.avatarV || 0);
           if (src) return el('img', { class: 'av ' + cls, src: src, alt: player.nickname });
           var r = ramp(player.color);
           return el('div', { class: 'av ' + cls, style: 'background:' + r.fill + ';color:' + r.ink, text: player.initials });

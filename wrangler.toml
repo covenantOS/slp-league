@@ -1,0 +1,25 @@
+name = "slp-league"
+main = "dist/_worker.js/index.js"
+compatibility_date = "2026-06-23"
+compatibility_flags = ["nodejs_compat"]
+account_id = "b77dd28c052fd0722bebce71cb98aa6e"
+
+# Static assets (CSS, fonts, favicon) served straight from the edge; everything
+# else falls through to the Astro SSR worker.
+[assets]
+binding = "ASSETS"
+directory = "./dist"
+
+[observability]
+enabled = true
+
+# The league data (points, players, seasons).
+[[d1_databases]]
+binding = "DB"
+database_name = "slp-league"
+database_id = "36a32ae4-5405-4923-97b2-292b836434cc"
+
+# Player photos.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "slp-league-media"
