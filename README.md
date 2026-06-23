@@ -54,23 +54,24 @@ code submitted for a player claims that profile; after that the code unlocks edi
 it). From there they set a **photo** and a **tagline**, which show on the board, their profile
 page, and the activity feed.
 
-Photos are resized in the browser to a small square and stored as a data URL on the player record
-in KV (no separate image host). A player's code is kept server-side only and is never sent to any
-page or API response.
+Photos are resized in the browser to a small square, then stored in **R2** object storage and
+served via `/img/<key>`. A player's code is kept server-side only and is never sent to any page
+or API response.
 
 ## How the data works
 
-Live game state (season, players, events) lives in one **Cloudflare KV** value (binding
-`LEAGUE`), seeded from `src/data/*.json` on first run. Pages read it at request time and
-compute standings with the pure engine in `src/lib/engine.mjs`. The rules (rubric, tiers,
-badges, challenge) always come from `src/data/config.json` in code.
+Live game state (season, players, events) and the season archive are stored as JSON documents in
+a **Cloudflare D1** database (binding `DB`), seeded from `src/data/*.json` on first run. Player
+photos live in **Cloudflare R2** (binding `BUCKET`), served via `/img/<key>`. Pages read the
+state at request time and compute standings with the pure engine in `src/lib/engine.mjs`. The
+rules (rubric, tiers, badges, challenge) always come from `src/data/config.json` in code.
 
 ## Project structure
 
 ```
 src/
   data/        season.json, players.json, events.json (empty on a fresh season) + config.json (rules)
-  lib/         engine.mjs (scoring), store.mjs (KV/in-memory), league.mjs, format.mjs
+  lib/         engine.mjs (scoring), store.mjs (D1/in-memory), league.mjs, format.mjs
   components/  PotBar, StandingRow, Badge, Sparkline, Avatar
   layouts/     Base.astro
   pages/       index, players/[id], players/index, history, rules
@@ -78,7 +79,10 @@ src/
   pages/me/    index.astro                 player profile editor (per-player code)
   pages/admin/ index.astro                 the control room (code 4221)
   pages/api/   mutate.js, profile.js, state.json.js   game/archive + profile writes
+  pages/img/   [...path].js                serves player photos from R2
 scripts/       test-engine.mjs
+wrangler.toml  Worker config: D1 (DB) + R2 (BUCKET) bindings, account, assets
+schema.sql     D1 table (state)
 ```
 
 The bank invariant (`held + bank === pot`) is enforced by processing events
@@ -88,25 +92,28 @@ chronologically and clamping, so an over-award can never mint money beyond the p
 
 ```bash
 npm install
-npm run dev          # http://localhost:4321  (in-memory store, no KV needed)
+npm run dev          # http://localhost:4321  (local D1 + R2 via platformProxy)
 npm run build
+npm run deploy       # astro build + wrangler deploy (manual deploy)
 npm run test:engine  # checks the scoring math and invariants
 ```
 
-In `astro dev` there is no KV binding, so the store falls back to an in-memory copy seeded
-from `src/data`. Changes persist for the life of the dev process. Production uses KV.
+`astro dev` gets local D1 + R2 emulation from the adapter's platformProxy (reading
+`wrangler.toml`). Apply the schema to the local DB once with
+`npx wrangler d1 execute slp-league --local --file schema.sql`. With no bindings present the
+store falls back to an in-memory copy seeded from `src/data`.
 
-## Deploy to Cloudflare Pages
+## Deploy to Cloudflare Workers
 
-1. Push this repo to GitHub.
-2. Cloudflare dashboard: Workers & Pages → Create → Pages → Connect to Git → pick `slp-league`.
-   Framework preset **Astro**, build command `npm run build`, output directory `dist`.
-3. Create a KV namespace: Workers & Pages → KV → Create namespace (e.g. `slp-league`).
-4. Bind it: your Pages project → Settings → Bindings (Functions) → KV namespace bindings →
-   add variable name **`LEAGUE`** pointing at that namespace.
-5. Redeploy. The store seeds itself from `src/data` on the first request.
+The D1 database (`slp-league`) and R2 bucket (`slp-league-media`) already exist, and the bindings
++ account are declared in `wrangler.toml`, so there is nothing to wire by hand.
 
-Update `site` in `astro.config.mjs` to the final URL once you have it.
+- **Manual deploy:** `npm run deploy` (runs `astro build` then `wrangler deploy`).
+- **Auto-deploy on push:** Cloudflare dashboard → Workers & Pages → connect this repo as a
+  Workers project. It reads `wrangler.toml` for the bindings and redeploys on every push.
+
+The store seeds itself from `src/data` on first request. The D1 schema is in `schema.sql`
+(`npm run db:schema` applies it to the remote DB).
 
 ## Starting a new season
 
