@@ -72,8 +72,9 @@ Three ways, pick whatever is easiest:
 2. **Edit `src/data/events.json` on GitHub** directly (the web editor). No setup needed.
 3. **Edit the file locally** and push.
 
-Each event is `{ date, playerId, points, category, reason }`. Points are positive to earn,
-negative to penalize. `id` is optional.
+Each event is `{ date, playerId, points, category, reason }`; `by` (who awarded it, defaults to
+William) and `id` are optional. Points are positive to earn, negative to penalize. Events dated in
+the future stay dormant until that date arrives.
 
 ## Deploy to Cloudflare Pages
 

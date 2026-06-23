@@ -28,7 +28,7 @@ const ordinal = ['', '1st', '2nd', '3rd'][p.rank] || `${p.rank}th`;
   <section class="phead card card-pad">
     <div class="avatar lg" style={`background:${r.fill};color:${r.ink}`}>{p.initials}</div>
     <div class="pmeta">
-      <div class="pname display">{p.fullNickname}</div>
+      <h1 class="pname display">{p.fullNickname}</h1>
       <div class="preal">{p.realName} &middot; {ordinal} place &middot; <span class="pill tier">{p.tier.name}</span></div>
       <div class="pbadges">
         {p.badges.length ? p.badges.map((b: string) => <Badge id={b} />) : <span class="nobadge">No badges yet this season</span>}

@@ -39,12 +39,12 @@ function checkinStreak(history, todayStr) {
 /** Net applied points within the trailing `days`-day window ending today. */
 function netInWindow(history, todayStr, days) {
   const cutoff = shiftDays(todayStr, -(days - 1));
-  return history.filter((h) => h.date >= cutoff).reduce((s, h) => s + h.applied, 0);
+  return history.filter((h) => h.date >= cutoff && h.date <= todayStr).reduce((s, h) => s + h.applied, 0);
 }
 
 function hasPenaltyWithin(history, todayStr, days) {
   const cutoff = shiftDays(todayStr, -(days - 1));
-  return history.some((h) => h.applied < 0 && h.date >= cutoff);
+  return history.some((h) => h.applied < 0 && h.date >= cutoff && h.date <= todayStr);
 }
 
 function badgesFor(p, ctx) {
@@ -69,12 +69,17 @@ export function computeState(data) {
   const state = new Map();
   for (const p of players) state.set(p.id, { ...p, points: seed, earned: 0, lost: 0, history: [] });
 
+  if (seed * players.length > season.potUSD) {
+    throw new Error(`Invalid config: seed (${seed}) x ${players.length} players exceeds the pot ($${season.potUSD}).`);
+  }
   let bank = season.potUSD - seed * players.length;
 
   // Process chronologically so the bank constraint is causal: you can only claim
-  // points that are actually in the bank at that moment. Ties break by id, then by
-  // original array order, so CMS-added rows without an id still sort stably.
+  // points that are actually in the bank at that moment. Future-dated events are
+  // held out until their day arrives. Ties break by id, then by original array
+  // order, so CMS-added rows without an id still sort stably.
   const sorted = events
+    .filter((e) => !e.date || e.date <= today)
     .map((e, i) => ({ e, i }))
     .sort((a, b) => {
       if (a.e.date !== b.e.date) return a.e.date < b.e.date ? -1 : 1;
@@ -90,7 +95,7 @@ export function computeState(data) {
     let applied;
     let capped = false;
     if (ev.points >= 0) {
-      applied = Math.min(ev.points, bank); // cannot claim an empty bank
+      applied = Math.max(0, Math.min(ev.points, bank)); // cannot claim an empty (or misconfigured negative) bank
       if (applied < ev.points) capped = true;
       pl.points += applied;
       pl.earned += applied;
@@ -152,7 +157,8 @@ export function activityFeed(data, limit) {
       if (ai !== bi) return ai < bi ? 1 : -1;
       return b.i - a.i;
     })
-    .map((x) => ({ ...x.e, player: byId.get(x.e.playerId) }));
+    .map((x) => ({ ...x.e, player: byId.get(x.e.playerId) }))
+    .filter((x) => x.player); // drop events whose playerId is not in players.json
   return typeof limit === 'number' ? feed.slice(0, limit) : feed;
 }
 

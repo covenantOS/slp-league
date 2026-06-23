@@ -54,7 +54,7 @@ check('Kdawg has no clean sheet', !byId.kdawg.badges.includes('clean_sheet'));
 // Overflow guard: a huge award cannot mint money beyond the bank.
 const flooded = computeState({
   ...data,
-  events: [...data.events, { id: 'z999', date: '2026-06-24', playerId: 'miggy', points: 99999, category: 'client_win', reason: 'test', by: 'test' }],
+  events: [...data.events, { id: 'z999', date: '2026-06-23', playerId: 'miggy', points: 99999, category: 'client_win', reason: 'test', by: 'test' }],
 });
 const heldF = flooded.players.reduce((s, p) => s + p.points, 0);
 check('overflow award clamps to bank (invariant holds)', heldF + flooded.bank === flooded.pot && flooded.bank === 0, { heldF, bank: flooded.bank });
@@ -63,6 +63,16 @@ console.log('\nFeed + mover:');
 check('activity feed newest-first', activityFeed(data, 1)[0].id === 'e018', activityFeed(data, 1)[0].id);
 const mover = biggestMover(state, 7);
 check('biggest 7d mover is Miggy (+40)', mover.player.id === 'miggy' && mover.move === 40, { id: mover.player.id, move: mover.move });
+
+console.log('\nFuture + stray guards:');
+const withFuture = computeState({ ...data, events: [...data.events, { id: 'fut1', date: '2026-09-01', playerId: 'daniboy', points: 50, category: 'client_win', reason: 'future', by: 'test' }] });
+const dF = withFuture.players.find((p) => p.id === 'daniboy');
+check('future-dated event does not change current balance', dF.points === byId.daniboy.points, dF.points);
+check('future-dated event excluded from last7', dF.last7 === byId.daniboy.last7, dF.last7);
+const withStray = { ...data, events: [...data.events, { id: 'x1', date: '2026-06-23', playerId: 'ghost', points: 5, category: 'checkin', reason: 'stray', by: 'test' }] };
+check('unknown-player event dropped from feed (no crash)', activityFeed(withStray).every((e) => e.player));
+const sStray = computeState(withStray);
+check('invariant holds with a stray (unknown-player) event', sStray.players.reduce((a, p) => a + p.points, 0) + sStray.bank === sStray.pot);
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILURE(S)'}\n`);
 process.exit(failures === 0 ? 0 : 1);

@@ -10,7 +10,7 @@ const b = badges[id];
 ---
 {
   b && (
-    <span class={`badge ${size}`} title={b.desc}>
+    <span class={`badge ${size}`} role="img" aria-label={`${b.label}: ${b.desc}`} title={b.desc}>
       <i class={`ti ti-${b.icon}`} aria-hidden="true" />
       {size === 'md' && <span>{b.label}</span>}
     </span>

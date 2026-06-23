@@ -19,10 +19,8 @@ const pts = vs.map((v, i) => {
 });
 const line = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ' ' + p[1]).join(' ');
 const area = `${line} L ${width} ${height} L 0 ${height} Z`;
-const last = pts[pts.length - 1];
 ---
-<svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} role="img" aria-label="Points balance over the season" style="display:block;overflow:visible">
+<svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" width="100%" height={height} role="img" aria-label="Points balance over the season" style="display:block;overflow:visible">
   <path d={area} fill={color} opacity="0.13" />
-  <path d={line} fill="none" stroke={color} stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
-  <circle cx={last[0]} cy={last[1]} r="3.6" fill={color} />
+  <path d={line} fill="none" stroke={color} stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />
 </svg>
