@@ -12,31 +12,24 @@
     { "min": 750, "name": "Legend",    "color": "purple" }
   ],
   "rubric": [
-    { "key": "checkin",        "label": "Daily check-in",                           "points": 3,   "type": "earn", "icon": "calendar-check" },
-    { "key": "proof_of_work",  "label": "Proof of work (data, screenshots)",        "points": 10,  "type": "earn", "icon": "camera" },
-    { "key": "deadline",       "label": "Hit a deadline",                           "points": 10,  "type": "earn", "icon": "clock-check" },
-    { "key": "weekly_report",  "label": "Weekly report on time",                    "points": 15,  "type": "earn", "icon": "file-text" },
-    { "key": "flag_blocker",   "label": "Flag a blocker or broken tool within 24h", "points": 20,  "type": "earn", "icon": "alert-triangle" },
-    { "key": "initiative",     "label": "Initiative without being asked",           "points": 25,  "type": "earn", "icon": "bulb" },
-    { "key": "improvement",    "label": "Process improvement adopted",              "points": 40,  "type": "earn", "icon": "trending-up" },
-    { "key": "client_win",     "label": "Client win (page 1 ranking, lead)",        "points": 50,  "type": "earn", "icon": "target-arrow" },
-    { "key": "retention",      "label": "Client retained or upsold",                "points": 75,  "type": "earn", "icon": "heart-handshake" },
-    { "key": "missed_checkin", "label": "Missed check-in",                          "points": -3,  "type": "lose", "icon": "calendar-x" },
-    { "key": "missed_deadline","label": "Missed deadline",                          "points": -10, "type": "lose", "icon": "clock-x" },
-    { "key": "sloppy",         "label": "Sloppy work or failed QA",                 "points": -15, "type": "lose", "icon": "thumb-down" },
-    { "key": "no_tool",        "label": "Not using tools or no proof of work",      "points": -15, "type": "lose", "icon": "plug-off" },
-    { "key": "red_card",       "label": "Red card (serious neglect)",               "points": -25, "type": "lose", "icon": "rectangle-vertical" }
+    { "key": "client_win",   "short": "Client win",     "label": "Client win (page 1, a lead, saved an account)",  "points": 75,  "type": "earn", "icon": "target-arrow" },
+    { "key": "initiative",   "short": "Initiative",     "label": "Took initiative no one asked for",               "points": 40,  "type": "earn", "icon": "bulb" },
+    { "key": "figured_out",  "short": "Figured it out", "label": "Figured out a hard problem nobody else cracked", "points": 30,  "type": "earn", "icon": "puzzle" },
+    { "key": "above_beyond", "short": "Above & beyond", "label": "Went above and beyond for the team or a client", "points": 25,  "type": "earn", "icon": "arrow-up-right" },
+    { "key": "owned_it",     "short": "Owned it",       "label": "Owned a problem and flagged it early",           "points": 20,  "type": "earn", "icon": "alert-triangle" },
+    { "key": "red_card",     "short": "Red card",       "label": "Red card: serious neglect or dropped the ball",  "points": -25, "type": "lose", "icon": "rectangle-vertical" },
+    { "key": "let_down",     "short": "Let down",       "label": "Let a client or the team down",                  "points": -15, "type": "lose", "icon": "thumb-down" }
   ],
   "badges": {
-    "golden_boot": { "label": "Golden Boot", "desc": "Most points earned this season",       "icon": "award" },
-    "on_fire":     { "label": "On Fire",     "desc": "7 or more days of check-ins in a row", "icon": "flame" },
-    "clean_sheet": { "label": "Clean Sheet", "desc": "30 days with no penalties",            "icon": "shield-check" },
-    "comeback":    { "label": "Comeback",    "desc": "Climbed back after a penalty",         "icon": "arrow-back-up" },
-    "top_flight":  { "label": "Top Flight",  "desc": "Reached 300 or more points",           "icon": "stairs-up" }
+    "golden_boot": { "label": "Golden Boot", "desc": "Most points earned this season",  "icon": "award" },
+    "rainmaker":   { "label": "Rainmaker",   "desc": "Landed a client win",             "icon": "businessplan" },
+    "clean_sheet": { "label": "Clean Sheet", "desc": "No penalties in the last 30 days", "icon": "shield-check" },
+    "comeback":    { "label": "Comeback",    "desc": "Climbed back after a penalty",     "icon": "arrow-back-up" },
+    "top_flight":  { "label": "Top Flight",  "desc": "Reached 300 or more points",       "icon": "stairs-up" }
   },
   "challenge": {
-    "title": "Matchday challenge",
-    "desc": "Every audit with a live SERP pull this week: +10 each",
+    "title": "Entrepreneur move of the week",
+    "desc": "The biggest above-and-beyond win this week earns a bonus from the boss",
     "endsLabel": "this week"
   }
 }

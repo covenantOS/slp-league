@@ -7,7 +7,9 @@ const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const today = () => new Date().toISOString().slice(0, 10);
 const addMonths = (dateStr, m) => {
   const d = new Date(dateStr + 'T00:00:00Z');
+  const day = d.getUTCDate();
   d.setUTCMonth(d.getUTCMonth() + m);
+  if (d.getUTCDate() < day) d.setUTCDate(0); // clamp month-end overflow (e.g. Aug 31 + 6mo)
   return d.toISOString().slice(0, 10);
 };
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
@@ -58,7 +60,11 @@ export async function POST({ request, locals }) {
   const game = await getGame(env);
 
   if (body.action === 'endSeason') {
+    if (game.events.length === 0) return json({ error: 'Nothing to end yet - no points have been awarded.' }, 400);
     const final = computeState(game);
+    const top = final.players[0];
+    const runnerUp = final.players[1];
+    const tied = !top || (runnerUp && runnerUp.points === top.points); // no champion on a tie
     const snapshot = {
       id: game.season.id,
       name: game.season.name,
@@ -66,9 +72,7 @@ export async function POST({ request, locals }) {
       endDate: game.season.endDate,
       endedOn: today(),
       potUSD: game.season.potUSD,
-      champion: final.players[0]
-        ? { playerId: final.players[0].id, nickname: final.players[0].nickname, dollars: final.players[0].dollars }
-        : null,
+      champion: tied ? null : { playerId: top.id, nickname: top.nickname, dollars: top.dollars },
       standings: final.players.map((p) => ({
         playerId: p.id, nickname: p.nickname, color: p.color, initials: p.initials,
         points: p.points, dollars: p.dollars, rank: p.rank, tier: p.tier.name,
@@ -76,10 +80,12 @@ export async function POST({ request, locals }) {
       events: game.events,
     };
     const archive = await getArchive(env);
+    const used = new Set(archive.map((a) => a.id));
     archive.push(snapshot);
     await setArchive(env, archive);
 
-    const n = (parseInt(String(game.season.id).replace(/\D/g, ''), 10) || 1) + 1;
+    let n = archive.length + 1; // derive next id from the archive, guarantee uniqueness
+    while (used.has('T' + n)) n++;
     game.events = [];
     game.season = {
       ...game.season,

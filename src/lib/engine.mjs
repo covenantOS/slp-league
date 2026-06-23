@@ -1,5 +1,5 @@
 // SLP League scoring engine. Pure ESM, zero dependencies, so the same code runs
-// inside Astro pages at build time AND inside the GitHub Action Slack script.
+// inside Astro pages at request time and inside the engine test.
 //
 // THE MODEL: one shared bank of `season.potUSD` dollars for the whole season.
 // Every player starts seeded with `season.seedPoints`. Every point a player
@@ -50,7 +50,7 @@ function hasPenaltyWithin(history, todayStr, days) {
 function badgesFor(p, ctx) {
   const out = [];
   if (p.id === ctx.bootId && p.earned > 0) out.push('golden_boot');
-  if (p.streak >= 7) out.push('on_fire');
+  if (p.history.some((h) => h.category === 'client_win' && h.applied > 0)) out.push('rainmaker');
   if (p.earned > 0 && !hasPenaltyWithin(p.history, ctx.today, 30)) out.push('clean_sheet');
   if (p.points >= 300) out.push('top_flight');
   if (p.lost > 0 && p.last7 > 0) out.push('comeback');
@@ -162,7 +162,7 @@ export function activityFeed(data, limit) {
   return typeof limit === 'number' ? feed.slice(0, limit) : feed;
 }
 
-/** Biggest net mover over the trailing window (used by the Slack drop). */
+/** Biggest net mover over the trailing window. */
 export function biggestMover(state, days = 1) {
   let best = null;
   for (const p of state.players) {

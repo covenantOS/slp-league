@@ -41,7 +41,7 @@ Go to **`/admin`**, enter the code **`4221`**, and you get a control panel:
 
 - Tap a green chip to award points or a red chip to dock them, per player.
 - Or type any custom amount + reason and hit Award / Dock.
-- Delete any entry, reset the season, or change the pot size.
+- Delete any entry, end the season (archives the final standings and starts a fresh one), or change the pot size.
 
 Every change updates the public board instantly for the whole team. The code is checked on
 the server for every write, so the board can't be edited without it. (It is a low-stakes
@@ -58,13 +58,14 @@ badges, challenge) always come from `src/data/config.json` in code.
 
 ```
 src/
-  data/        season.json, players.json, events.json (seed) + config.json (rules)
+  data/        season.json, players.json, events.json (empty on a fresh season) + config.json (rules)
   lib/         engine.mjs (scoring), store.mjs (KV/in-memory), league.mjs, format.mjs
   components/  PotBar, StandingRow, Badge, Sparkline
   layouts/     Base.astro
   pages/       index, players/[id], players/index, history, rules
-  pages/admin/ index.astro                the control room (code 4221)
-  pages/api/   mutate.js, state.json.js    read/write the KV game
+  pages/seasons/ index.astro, [id].astro   archive of completed seasons
+  pages/admin/ index.astro                 the control room (code 4221)
+  pages/api/   mutate.js, state.json.js     read/write the KV game + archive
 scripts/       test-engine.mjs
 ```
 
@@ -97,9 +98,9 @@ Update `site` in `astro.config.mjs` to the final URL once you have it.
 
 ## Starting a new season
 
-Open `/admin` and hit **Reset season** (clears every point back to 100, refills the bank).
-Use **Set pot** there to change the pot. To rename the season or change its dates, edit the
-defaults in `src/data/season.json` and reset.
+Open `/admin` and hit **End season**. The final standings are saved to the archive (browse
+them at `/seasons`), then everyone resets to 100 and a fresh season starts, dated six months
+out. Use **Set pot** to change the pot.
 
 ## Tuning the rules
 

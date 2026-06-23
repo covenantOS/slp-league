@@ -1,4 +1,4 @@
-// Display helpers shared by pages and the Slack script.
+// Display helpers shared by the Astro pages.
 
 export const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
 export const signed = (n) => (n > 0 ? '+' : '') + Math.round(n);

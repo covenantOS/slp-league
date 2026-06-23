@@ -40,7 +40,6 @@ const ordinal = ['', '1st', '2nd', '3rd'][p.rank] || `${p.rank}th`;
   <section class="stats">
     <div class="stat card card-pad"><div class="stat-num display tnum pos">{signed(p.earned)}</div><div class="stat-lbl">earned</div></div>
     <div class="stat card card-pad"><div class="stat-num display tnum neg">{p.lost ? '-' + p.lost : '0'}</div><div class="stat-lbl">lost to penalties</div></div>
-    <div class="stat card card-pad"><div class="stat-num display tnum">{p.streak}<span class="u">d</span></div><div class="stat-lbl">check-in streak</div></div>
     <div class="stat card card-pad"><div class={`stat-num display tnum ${p.last7 < 0 ? 'neg' : ''}`}>{signed(p.last7)}</div><div class="stat-lbl">last 7 days</div></div>
   </section>
 
@@ -90,7 +89,7 @@ const ordinal = ['', '1st', '2nd', '3rd'][p.rank] || `${p.rank}th`;
   .pdollars { font-size: 38px; line-height: 1; color: var(--gold); }
   .ppts { color: var(--muted); font-size: 13px; margin-top: 4px; }
 
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
   .stat { text-align: center; padding: 16px 10px; }
   .stat-num { font-size: 28px; line-height: 1; }
   .stat-num .u { font-size: 16px; color: var(--muted); }

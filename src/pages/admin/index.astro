@@ -34,7 +34,7 @@ import '../../styles/global.css';
       .topbrand a { color: var(--muted); font-size: 13px; font-family: var(--font-body); margin-left: auto; }
       .topbrand a:hover { color: var(--pitch); }
 
-      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+      .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
       .pcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
       .pc-h { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
       .pc-id { font-size: 15px; }
@@ -152,7 +152,7 @@ import '../../styles/global.css';
           return el('button', {
             class: 'chip-btn ' + (c.type === 'earn' ? 'earn' : 'lose'),
             'data-act': 'award', 'data-player': p.id, 'data-points': c.points, 'data-cat': c.key, 'data-label': c.label,
-          }, [el('b', { text: (c.points > 0 ? '+' : '') + c.points }), ' ' + c.label]);
+          }, [el('b', { text: (c.points > 0 ? '+' : '') + c.points }), ' ' + (c.short || c.label)]);
         }
         function playerCard(p) {
           var earn = STATE.config.rubric.filter(function (c) { return c.type === 'earn'; });

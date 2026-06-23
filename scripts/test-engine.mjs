@@ -9,24 +9,12 @@ const load = (f) => JSON.parse(readFileSync(join(root, 'src/data', f), 'utf8'));
 // Inline event fixture so the test is independent of the seed file (which is
 // empty for a fresh season). season/players/config still come from src/data.
 const FIXTURE_EVENTS = [
-  { id: 'e001', date: '2026-06-09', playerId: 'kdawg', points: 3, category: 'checkin', reason: 'Daily check-in' },
-  { id: 'e002', date: '2026-06-10', playerId: 'kdawg', points: 3, category: 'checkin', reason: 'Daily check-in' },
-  { id: 'e003', date: '2026-06-11', playerId: 'miggy', points: 20, category: 'flag_blocker', reason: 'Flagged a broken tool' },
-  { id: 'e004', date: '2026-06-12', playerId: 'daniboy', points: 10, category: 'deadline', reason: 'Hit a deadline' },
-  { id: 'e005', date: '2026-06-13', playerId: 'miggy', points: 15, category: 'weekly_report', reason: 'Weekly report' },
-  { id: 'e006', date: '2026-06-13', playerId: 'daniboy', points: 15, category: 'weekly_report', reason: 'Weekly report' },
-  { id: 'e007', date: '2026-06-18', playerId: 'miggy', points: 25, category: 'initiative', reason: 'Initiative' },
-  { id: 'e008', date: '2026-06-18', playerId: 'daniboy', points: 10, category: 'proof_of_work', reason: 'Proof of work' },
-  { id: 'e009', date: '2026-06-19', playerId: 'miggy', points: 3, category: 'checkin', reason: 'Daily check-in' },
-  { id: 'e010', date: '2026-06-20', playerId: 'miggy', points: 3, category: 'checkin', reason: 'Daily check-in' },
-  { id: 'e011', date: '2026-06-20', playerId: 'daniboy', points: 3, category: 'checkin', reason: 'Daily check-in' },
-  { id: 'e012', date: '2026-06-20', playerId: 'kdawg', points: -25, category: 'red_card', reason: 'Red card' },
-  { id: 'e013', date: '2026-06-21', playerId: 'miggy', points: 3, category: 'checkin', reason: 'Daily check-in' },
-  { id: 'e014', date: '2026-06-21', playerId: 'daniboy', points: 3, category: 'checkin', reason: 'Daily check-in' },
-  { id: 'e015', date: '2026-06-21', playerId: 'kdawg', points: -10, category: 'missed_deadline', reason: 'Missed deadline' },
-  { id: 'e016', date: '2026-06-22', playerId: 'miggy', points: 3, category: 'checkin', reason: 'Daily check-in' },
-  { id: 'e017', date: '2026-06-23', playerId: 'miggy', points: 3, category: 'checkin', reason: 'Daily check-in' },
-  { id: 'e018', date: '2026-06-23', playerId: 'daniboy', points: 3, category: 'checkin', reason: 'Daily check-in' },
+  { id: 'e001', date: '2026-06-12', playerId: 'kdawg', points: 20, category: 'owned_it', reason: 'Flagged a suspended GBP over the weekend' },
+  { id: 'e002', date: '2026-06-15', playerId: 'miggy', points: 75, category: 'client_win', reason: 'Got a client onto page one' },
+  { id: 'e003', date: '2026-06-16', playerId: 'daniboy', points: 30, category: 'figured_out', reason: 'Cracked a stubborn indexing issue' },
+  { id: 'e004', date: '2026-06-20', playerId: 'miggy', points: 40, category: 'initiative', reason: 'Built a shared rank-tracking dashboard nobody asked for' },
+  { id: 'e005', date: '2026-06-20', playerId: 'kdawg', points: -25, category: 'red_card', reason: 'Left DataForSEO broken for weeks and never said anything' },
+  { id: 'e006', date: '2026-06-21', playerId: 'daniboy', points: 25, category: 'above_beyond', reason: 'Covered a client for a teammate during a crunch' },
 ];
 const data = { season: load('season.json'), players: load('players.json'), events: FIXTURE_EVENTS, config: load('config.json') };
 
@@ -62,15 +50,16 @@ check('no player below the 0 floor', state.players.every((p) => p.points >= 0));
 check('no player exceeds the pot', state.players.every((p) => p.points <= state.pot));
 check('ranks are 1..N unique', JSON.stringify(state.players.map((p) => p.rank)) === JSON.stringify([1, 2, 3]));
 
-console.log('\nExpected seed outcomes:');
+console.log('\nExpected fixture outcomes:');
 const byId = Object.fromEntries(state.players.map((p) => [p.id, p]));
 check('Miggy leads', state.players[0].id === 'miggy', state.players[0].id);
-check('Miggy = 175 pts', byId.miggy.points === 175, byId.miggy.points);
-check('Daniboy = 144 pts', byId.daniboy.points === 144, byId.daniboy.points);
-check('Kdawg = 71 pts (after red card + missed deadline)', byId.kdawg.points === 71, byId.kdawg.points);
-check('bank = $2,110', state.bank === 2110, state.bank);
+check('Miggy = 215 pts', byId.miggy.points === 215, byId.miggy.points);
+check('Daniboy = 155 pts', byId.daniboy.points === 155, byId.daniboy.points);
+check('Kdawg = 95 pts (after the red card)', byId.kdawg.points === 95, byId.kdawg.points);
+check('bank = $2,035', state.bank === 2035, state.bank);
 check('Miggy holds the Golden Boot', byId.miggy.badges.includes('golden_boot'));
-check('Miggy streak = 5', byId.miggy.streak === 5, byId.miggy.streak);
+check('Miggy holds Rainmaker (client win)', byId.miggy.badges.includes('rainmaker'));
+check('Kdawg has no Rainmaker', !byId.kdawg.badges.includes('rainmaker'));
 check('Kdawg has no clean sheet', !byId.kdawg.badges.includes('clean_sheet'));
 
 // Overflow guard: a huge award cannot mint money beyond the bank.
@@ -82,7 +71,7 @@ const heldF = flooded.players.reduce((s, p) => s + p.points, 0);
 check('overflow award clamps to bank (invariant holds)', heldF + flooded.bank === flooded.pot && flooded.bank === 0, { heldF, bank: flooded.bank });
 
 console.log('\nFeed + mover:');
-check('activity feed newest-first', activityFeed(data, 1)[0].id === 'e018', activityFeed(data, 1)[0].id);
+check('activity feed newest-first', activityFeed(data, 1)[0].id === 'e006', activityFeed(data, 1)[0].id);
 const mover = biggestMover(state, 7);
 check('biggest 7d mover is Miggy (+40)', mover.player.id === 'miggy' && mover.move === 40, { id: mover.player.id, move: mover.move });
 

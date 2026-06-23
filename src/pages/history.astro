@@ -22,6 +22,8 @@ for (const e of feed) {
     <h1>History</h1>
   </section>
 
+  {groups.length === 0 && <div class="card card-pad emptyhist">No points logged yet this season.</div>}
+
   {
     groups.map((g) => (
       <section class="daygroup">
@@ -54,6 +56,7 @@ for (const e of feed) {
 <style>
   .hero { padding: 8px 0 6px; }
   .hero h1 { margin-top: 6px; }
+  .emptyhist { color: var(--muted); font-size: 15px; margin-top: 16px; }
   .daygroup { margin-top: 22px; }
   .dayhead { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 1.4px; font-size: 12px; color: var(--muted); margin-bottom: 9px; padding-left: 4px; }
   .feed-list { overflow: hidden; }

@@ -1,6 +1,3 @@
-// Single source of truth for pages: load the JSON data and expose computed state.
-// (The Slack script loads data via fs instead, since plain Node needs import
-// attributes for JSON — see scripts/slack-matchday.mjs.)
 // Pages load the live game from the store (KV in prod, in-memory in dev) and
 // compute standings at request time. `env` comes from Astro.locals.runtime.env.
 import { computeState, activityFeed } from './engine.mjs';
