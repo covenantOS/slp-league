@@ -2,6 +2,7 @@
 import '../../styles/global.css';
 // Standalone control panel. All interaction is client-side against /api/*.
 // The password (4221) is enforced server-side on every write in /api/mutate.
+const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
 ---
 
 <!doctype html>
@@ -78,6 +79,7 @@ import '../../styles/global.css';
     </style>
   </head>
   <body>
+    {!persistent && <div class="warnbar">Changes are not being saved. This is local preview, or the <b>LEAGUE</b> KV namespace is not bound on Cloudflare. Bind it and redeploy.</div>}
     <div class="gate" id="gate">
       <form class="gate-card" id="gate-form">
         <h1>Control room</h1>

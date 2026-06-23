@@ -13,6 +13,7 @@ const league = config.league;
 const pageTitle = title ? `${title} | ${league.name}` : `${league.name} — ${league.tagline}`;
 const desc = description ?? league.tagline;
 const season = (await getGame(Astro.locals?.runtime?.env)).season;
+const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
 
 const nav = [
   { key: 'standings', href: '/', label: 'Standings', icon: 'trophy' },
@@ -47,6 +48,13 @@ const nav = [
     />
   </head>
   <body>
+    {
+      !persistent && (
+        <div class="warnbar">
+          Changes are not being saved. This is normal in local preview; on Cloudflare, bind a KV namespace named <b>LEAGUE</b> to this Pages project and redeploy.
+        </div>
+      )
+    }
     <header class="masthead">
       <div class="wrap">
         <a class="brand" href="/">
