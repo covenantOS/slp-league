@@ -9,18 +9,17 @@ const segs = state.players.map((p: any) => ({
   label: p.nickname,
   value: p.points,
   color: ramp(p.color).fill,
-  ink: ramp(p.color).ink,
 }));
-segs.push({ label: 'Bank', value: state.bank, color: '#2f3e57', ink: '#d7e0ee' });
+segs.push({ label: 'Bank', value: state.bank, color: '#e7e3d2', bank: true });
 ---
-<div class="pot card">
+<div class="pot card card-pad">
   <div class="pot-head">
     <div>
       <div class="eyebrow">The pot</div>
-      <div class="pot-total display tnum">{money(total)}</div>
+      <div class="pot-total display">{money(total)}</div>
     </div>
     <div class="pot-bank">
-      <div class="pot-bank-num display tnum">{money(state.bank)}</div>
+      <div class="pot-bank-num display">{money(state.bank)}</div>
       <div class="pot-bank-lbl">unclaimed in the bank</div>
     </div>
   </div>
@@ -30,49 +29,46 @@ segs.push({ label: 'Bank', value: state.bank, color: '#2f3e57', ink: '#d7e0ee' }
       segs.map((s: any) => {
         const w = (s.value / total) * 100;
         return (
-          <div class="seg" style={`width:${w}%;background:${s.color};color:${s.ink}`} title={`${s.label}: ${money(s.value)}`}>
-            {w >= 13 && (
-              <span class="seg-lbl">
-                {s.label} {money(s.value)}
-              </span>
-            )}
+          <div class={`seg${s.bank ? ' bank' : ''}`} style={`width:${w}%;background:${s.color}`} title={`${s.label}: ${money(s.value)}`}>
+            {s.bank && <span class="seg-lbl">Bank &middot; {money(s.value)}</span>}
           </div>
         );
       })
     }
   </div>
+
   <div class="pot-legend">
     {
       segs.map((s: any) => (
         <span class="leg">
-          <span class="sw" style={`background:${s.color}`} aria-hidden="true" />
+          <span class="dot" style={`background:${s.color}`} aria-hidden="true" />
           <span class="leg-name">{s.label}</span>
           <span class="leg-val">{money(s.value)}</span>
         </span>
       ))
     }
   </div>
-  <p class="pot-note">Every point a player claims comes out of the bank. Every penalty drops back in for the others to grab.</p>
+  <p class="pot-note">Every point a player claims is pulled out of the bank. Every penalty drops back in for the rest of the squad to grab.</p>
 </div>
 <style>
-  .pot { padding: 18px 20px 20px; }
-  .pot-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-  .pot-total { font-size: 40px; line-height: 1; color: var(--gold); }
+  .pot-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .pot-total { font-size: 52px; line-height: 0.9; color: var(--gold-2); }
   .pot-bank { text-align: right; }
-  .pot-bank-num { font-size: 22px; line-height: 1; color: var(--text); }
-  .pot-bank-lbl { font-size: 12px; color: var(--muted); margin-top: 3px; }
-  .pot-bar { display: flex; height: 38px; border-radius: 11px; overflow: hidden; border: 1px solid var(--line); }
-  .seg { display: flex; align-items: center; padding: 0 8px; min-width: 2px; box-shadow: inset -1px 0 0 rgba(9, 13, 22, 0.35); overflow: hidden; }
-  .seg-lbl { font-family: var(--font-display); font-weight: 500; font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .pot-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 13px; }
-  .leg { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; }
-  .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }
-  .leg-name { color: var(--muted); }
-  .leg-val { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; }
-  .pot-note { color: var(--muted); font-size: 13px; margin: 12px 0 0; }
+  .pot-bank-num { font-size: 30px; line-height: 1; color: var(--ink); }
+  .pot-bank-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .pot-bar { display: flex; height: 44px; border-radius: 12px; overflow: hidden; background: #e7e3d2; }
+  .seg { min-width: 3px; box-shadow: inset -2px 0 0 rgba(255, 255, 255, 0.55); }
+  .seg.bank { display: flex; align-items: center; padding: 0 16px; box-shadow: none; }
+  .seg-lbl { font-weight: 700; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .pot-legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 16px; }
+  .leg { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+  .dot { width: 13px; height: 13px; border-radius: 4px; flex: none; }
+  .leg-name { color: var(--muted); font-weight: 600; }
+  .leg-val { font-weight: 800; font-variant-numeric: tabular-nums; }
+  .pot-note { color: var(--muted); font-size: 14px; margin: 16px 0 0; line-height: 1.6; }
   @media (max-width: 520px) {
-    .pot-total { font-size: 32px; }
-    .pot-bar { height: 32px; }
-    .seg-lbl { font-size: 11px; }
+    .pot-total { font-size: 40px; }
+    .pot-bank-num { font-size: 24px; }
+    .pot-bar { height: 38px; }
   }
 </style>

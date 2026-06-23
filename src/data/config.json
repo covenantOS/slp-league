@@ -28,8 +28,8 @@
     "top_flight":  { "label": "Top Flight",  "desc": "Reached 300 or more points",       "icon": "stairs-up" }
   },
   "challenge": {
-    "title": "Entrepreneur move of the week",
-    "desc": "The biggest above-and-beyond win this week earns a bonus from the boss",
+    "title": "Man of the match",
+    "desc": "The biggest above-and-beyond win this week earns a bonus from the boss.",
     "endsLabel": "this week"
   }
 }

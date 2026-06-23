@@ -15,11 +15,13 @@ export function shortDate(iso) {
 
 /** Map a player/tier color name to its ramp hexes for inline styling. */
 export const RAMP = {
-  blue: { fill: '#85B7EB', soft: '#B5D4F4', ink: '#042C53', mid: '#378ADD' },
-  teal: { fill: '#5DCAA5', soft: '#9FE1CB', ink: '#04342C', mid: '#1D9E75' },
-  coral: { fill: '#F0997B', soft: '#F5C4B3', ink: '#4A1B0C', mid: '#D85A30' },
-  amber: { fill: '#EF9F27', soft: '#FAC775', ink: '#412402', mid: '#BA7517' },
-  purple: { fill: '#7F77DD', soft: '#CECBF6', ink: '#26215C', mid: '#534AB7' },
-  gray: { fill: '#B4B2A9', soft: '#D3D1C7', ink: '#2C2C2A', mid: '#888780' },
+  green: { fill: '#15a04e', soft: 'rgba(21,160,78,0.14)', ink: '#ffffff', mid: '#0c7a3a' },
+  red: { fill: '#e0413e', soft: 'rgba(224,65,62,0.14)', ink: '#ffffff', mid: '#b32b29' },
+  blue: { fill: '#3b6fe0', soft: 'rgba(59,111,224,0.14)', ink: '#ffffff', mid: '#2a52ad' },
+  amber: { fill: '#f2a51c', soft: 'rgba(242,165,28,0.16)', ink: '#4a3500', mid: '#d98e00' },
+  teal: { fill: '#12a594', soft: 'rgba(18,165,148,0.14)', ink: '#ffffff', mid: '#0c7a6e' },
+  coral: { fill: '#f2683c', soft: 'rgba(242,104,60,0.14)', ink: '#ffffff', mid: '#c44a23' },
+  purple: { fill: '#7c5cff', soft: 'rgba(124,92,255,0.14)', ink: '#ffffff', mid: '#5a3fd6' },
+  gray: { fill: '#98a0ab', soft: 'rgba(152,160,171,0.16)', ink: '#ffffff', mid: '#6c7480' },
 };
 export const ramp = (c) => RAMP[c] || RAMP.gray;

@@ -9,65 +9,72 @@ interface Props {
 const { p, pot } = Astro.props;
 const r = ramp(p.color);
 const share = Math.round((p.points / pot) * 100);
-const trendCls = p.last7 > 0 ? 'delta-up' : p.last7 < 0 ? 'delta-down' : 'delta-flat';
-const trendIcon = p.last7 > 0 ? 'trending-up' : p.last7 < 0 ? 'trending-down' : 'minus';
 const leader = p.rank === 1;
+const podium = ['', '#f2a51c', '#a8adb5', '#cd7f47'][p.rank] || '#c7ccd3';
+const trendCls = p.last7 > 0 ? 'delta-up' : p.last7 < 0 ? 'delta-down' : 'delta-flat';
 ---
-<a class={`row${leader ? ' leader' : ''}`} href={`/players/${p.id}/`}>
-  <div class="rank display tnum">{p.rank}</div>
-  <Avatar player={p} size={42} radius={12} />
+<a class={`row${leader ? ' leader' : ''}`} href={`/players/${p.id}/`} style={`--accent:${podium}`}>
+  <div class="rank display">{p.rank}</div>
+  <Avatar player={p} size={46} />
   <div class="who">
     <div class="who-top">
-      <span class="name display">{p.nickname}</span>
-      {leader && <i class="ti ti-crown" style="color:var(--gold)" aria-hidden="true" title="League leader"></i>}
-      <span class="pill tier">{p.tier.name}</span>
+      <span class="name">{p.nickname}</span>
+      {
+        leader && (
+          <span class="leadpill">
+            <i class="ti ti-star-filled" aria-hidden="true" /> Leader
+          </span>
+        )
+      }
+      <span class="pill tier" style={`background:${r.soft};color:${r.mid};border-color:transparent`}>{p.tier.name}</span>
+      {p.badges.slice(0, 2).map((b: string) => <Badge id={b} size="sm" />)}
     </div>
     <div class="who-sub">
-      <span class={trendCls}><i class={`ti ti-${trendIcon}`} aria-hidden="true"></i> {signed(p.last7)} <span class="dim">/ 7d</span></span>
-      {p.streak > 0 && <span class="streak"><i class="ti ti-flame" aria-hidden="true"></i> {p.streak}d</span>}
-      {p.badges.slice(0, 3).map((b: string) => <Badge id={b} size="sm" />)}
+      <span class={trendCls}>{p.last7 === 0 ? '— ' : ''}{signed(p.last7)}</span>
+      <span class="dim">/ 7d active</span>
     </div>
   </div>
   <div class="score">
-    <div class="dollars display tnum">{money(p.dollars)}</div>
-    <div class="share-bar"><span style={`width:${share}%;background:${r.fill}`}></span></div>
+    <div class="dollars display">{money(p.dollars)}</div>
+    <div class="share-bar"><span style={`width:${Math.max(share, 2)}%;background:${r.fill}`} /></div>
     <div class="share-txt">{share}% of pot</div>
   </div>
 </a>
 <style>
   .row {
     display: grid;
-    grid-template-columns: 34px 42px 1fr auto;
+    grid-template-columns: 40px 46px 1fr auto;
     align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
+    gap: 16px;
+    padding: 16px 22px 16px 18px;
     background: var(--surface);
     border: 1px solid var(--line);
+    border-left: 5px solid var(--accent);
     border-radius: var(--radius);
-    transition: border-color 0.15s, transform 0.15s, background 0.15s;
+    box-shadow: var(--shadow);
+    transition: transform 0.14s, box-shadow 0.14s;
   }
-  .row + .row { margin-top: 10px; }
-  .row:hover { border-color: var(--line-2); background: var(--surface-2); transform: translateY(-1px); }
-  .row:focus-visible { border-color: var(--line-2); background: var(--surface-2); transform: translateY(-1px); }
-  .row.leader { border-color: rgba(246, 180, 0, 0.4); background: linear-gradient(180deg, rgba(246, 180, 0, 0.06), transparent 60%), var(--surface); }
-  .rank { font-size: 24px; color: var(--muted); text-align: center; }
-  .row.leader .rank { color: var(--gold); }
+  .row + .row { margin-top: 12px; }
+  .row:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .row.leader { background: linear-gradient(180deg, #fffae8, #fffdf6); border-color: rgba(242, 165, 28, 0.45); }
+  .rank { font-size: 30px; color: var(--accent); text-align: center; line-height: 1; }
   .who { min-width: 0; }
   .who-top { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
-  .name { font-size: 20px; letter-spacing: 0.4px; }
-  .who-sub { display: flex; align-items: center; gap: 12px; margin-top: 4px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
-  .who-sub .ti { font-size: 14px; vertical-align: -2px; }
+  .name { font-family: var(--font-body); font-weight: 800; font-size: 21px; letter-spacing: -0.3px; }
+  .leadpill { display: inline-flex; align-items: center; gap: 4px; background: var(--gold); color: var(--gold-ink); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; padding: 3px 9px; border-radius: var(--radius-pill); }
+  .leadpill .ti { font-size: 12px; }
+  .who-sub { display: flex; align-items: center; gap: 7px; margin-top: 5px; font-size: 13px; }
   .dim { color: var(--faint); }
-  .streak { color: var(--c-amber); }
-  .score { text-align: right; min-width: 120px; }
-  .dollars { font-size: 26px; line-height: 1; }
-  .share-bar { height: 5px; border-radius: 999px; background: var(--surface-3); margin: 7px 0 4px; overflow: hidden; }
+  .score { text-align: right; min-width: 130px; }
+  .dollars { font-size: 30px; line-height: 1; color: var(--ink); }
+  .share-bar { height: 5px; border-radius: 999px; background: var(--bg-2); margin: 8px 0 4px; overflow: hidden; }
   .share-bar span { display: block; height: 100%; border-radius: 999px; }
-  .share-txt { font-size: 11px; color: var(--faint); }
-  @media (max-width: 520px) {
-    .row { grid-template-columns: 26px 42px 1fr auto; gap: 11px; padding: 12px; }
+  .share-txt { font-size: 11px; color: var(--faint); font-weight: 600; }
+  @media (max-width: 540px) {
+    .row { grid-template-columns: 28px 42px 1fr auto; gap: 11px; padding: 13px 14px 13px 12px; }
     .name { font-size: 18px; }
-    .dollars { font-size: 22px; }
-    .score { min-width: 92px; }
+    .dollars { font-size: 24px; }
+    .score { min-width: 96px; }
+    .rank { font-size: 24px; }
   }
 </style>

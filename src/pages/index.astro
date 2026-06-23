@@ -4,8 +4,7 @@ import PotBar from '../components/PotBar.astro';
 import StandingRow from '../components/StandingRow.astro';
 import Avatar from '../components/Avatar.astro';
 import { getGame, computeState, activityFeed } from '../lib/league.mjs';
-import { money, signed, shortDate, ramp } from '../lib/format.mjs';
-import config from '../data/config.json';
+import { money, signed, shortDate } from '../lib/format.mjs';
 
 const game = await getGame(Astro.locals?.runtime?.env);
 const state = computeState(game);
@@ -13,38 +12,54 @@ const leader = state.players[0];
 const recent = activityFeed(game, 5);
 const ch = game.config.challenge;
 const seasonPct = Math.round(state.seasonProgress * 100);
+
+const dms = (s: string) => new Date(s + 'T00:00:00Z').getTime();
+const totalDays = Math.max(1, Math.round((dms(game.season.endDate) - dms(game.season.startDate)) / 86400000));
+const weeksTotal = Math.max(1, Math.round(totalDays / 7));
+const elapsed = Math.max(0, totalDays - state.daysLeft);
+const weekNow = Math.min(weeksTotal, Math.floor(elapsed / 7) + 1);
+
+const buntingColors = ['#e0413e', '#f2a51c', '#3b6fe0', '#15a04e', '#ffffff'];
+const flags = Array.from({ length: 26 }, (_, i) => buntingColors[i % buntingColors.length]);
 ---
 
 <Base active="standings">
   <section class="hero">
-    <div class="eyebrow">{config.league.tagline}</div>
-    <h1>Standings</h1>
-    <div class="hero-meta">
-      <span><i class="ti ti-calendar-event" aria-hidden="true"></i> {state.daysLeft} days left in {game.season.name}</span>
-      <span class="sep">&middot;</span>
-      <span><i class="ti ti-crown" style="color:var(--gold)" aria-hidden="true"></i> {leader.nickname} leads with {money(leader.dollars)}</span>
+    <div class="bunting" aria-hidden="true">{flags.map((c) => <span class="flag" style={`border-top-color:${c}`} />)}</div>
+    <div class="circle" aria-hidden="true"></div>
+    <div class="hero-body">
+      <div class="hero-eyebrow">One season &middot; one {money(state.pot)} pot &middot; winner takes it home</div>
+      <h1>Standings</h1>
+      <div class="hero-meta">
+        <span><span class="sq"></span> {state.daysLeft} days left in {game.season.name}</span>
+        <span class="slash">/</span>
+        <span><i class="ti ti-star-filled" aria-hidden="true"></i> {leader.nickname} leads with {money(leader.dollars)}</span>
+      </div>
+      <div class="prog">
+        <div class="prog-top"><span>Season progress</span><span>Week {weekNow} of {weeksTotal}</span></div>
+        <div class="prog-bar"><span style={`width:${Math.max(seasonPct, 2)}%`}></span></div>
+      </div>
     </div>
-    <div class="season-meter" title={`${seasonPct}% of the season played`}><span style={`width:${seasonPct}%`}></span></div>
   </section>
 
-  <PotBar state={state} />
+  <div class="potwrap"><PotBar state={state} /></div>
 
   <section class="section">
     <div class="section-head">
-      <h2>The table</h2>
-      <span class="link">{state.players.length} players &middot; winner takes the most</span>
+      <h2>League table</h2>
+      <span class="hint">{state.players.length} players &middot; winner takes the most</span>
     </div>
     {state.players.map((p: any) => <StandingRow p={p} pot={state.pot} />)}
   </section>
 
   <section class="section">
-    <div class="card card-pad challenge">
-      <div class="ch-ico"><i class="ti ti-target-arrow" aria-hidden="true"></i></div>
-      <div class="ch-body">
-        <div class="eyebrow">{ch.title}</div>
-        <div class="ch-desc">{ch.desc}</div>
+    <div class="card card-pad motm">
+      <div class="motm-ico"><i class="ti ti-star-filled" aria-hidden="true"></i></div>
+      <div class="motm-body">
+        <div class="eyebrow">{ch.title} &middot; this week</div>
+        <div class="motm-desc">{ch.desc}</div>
       </div>
-      <span class="chip gold">Bonus points</span>
+      <a class="chip gold" href="/admin">Award bonus &rarr;</a>
     </div>
   </section>
 
@@ -53,22 +68,32 @@ const seasonPct = Math.round(state.seasonProgress * 100);
       <h2>Latest</h2>
       <a class="link" href="/history/">Full history &rarr;</a>
     </div>
-    <div class="card feed-list">
-      {
-        recent.map((e: any, i: number) => (
-          <div class={`feed${i > 0 ? ' br' : ''}`}>
-            <Avatar player={e.player} size={34} radius={9} />
-            <div class="feed-main">
-              <div class="feed-reason">{e.reason}</div>
-              <div class="feed-sub">
-                {e.player.nickname} &middot; {shortDate(e.date)}
-              </div>
-            </div>
-            <div class={`feed-pts ${e.points >= 0 ? 'pos' : 'neg'}`}>{signed(e.points)}</div>
+    {
+      recent.length === 0 ? (
+        <div class="card card-pad kickoff">
+          <div class="kick-ball"><i class="ti ti-ball-football" aria-hidden="true" /></div>
+          <div>
+            <div class="kick-title">Kickoff &mdash; {game.season.name} is live.</div>
+            <div class="kick-sub">Everyone starts level at {money(state.season.seedPoints * state.season.pointValueUSD)}. No moves logged yet &mdash; the bank's wide open.</div>
           </div>
-        ))
-      }
-    </div>
+        </div>
+      ) : (
+        <div class="feed-list">
+          {recent.map((e: any) => (
+            <div class="feed card">
+              <Avatar player={e.player} size={34} />
+              <div class="feed-main">
+                <div class="feed-reason">{e.reason}</div>
+                <div class="feed-sub">
+                  {e.player.nickname} &middot; {shortDate(e.date)}
+                </div>
+              </div>
+              <div class={`feed-pts ${e.points >= 0 ? 'pos' : 'neg'}`}>{signed(e.points)}</div>
+            </div>
+          ))}
+        </div>
+      )
+    }
   </section>
 </Base>
 
@@ -79,7 +104,7 @@ const seasonPct = Math.round(state.seasonProgress * 100);
       if (sessionStorage.getItem('slp_confetti')) return;
       sessionStorage.setItem('slp_confetti', '1');
     } catch (e) {}
-    var colors = ['#f6b400', '#20c45f', '#4f9dec', '#f07a52'];
+    var colors = ['#f2a51c', '#15a04e', '#3b6fe0', '#e0413e'];
     var canvas = document.createElement('canvas');
     canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:999';
     canvas.width = window.innerWidth;
@@ -87,16 +112,8 @@ const seasonPct = Math.round(state.seasonProgress * 100);
     document.body.appendChild(canvas);
     var ctx = canvas.getContext('2d');
     var parts = [];
-    for (var i = 0; i < 40; i++) {
-      parts.push({
-        x: window.innerWidth / 2 + (Math.random() - 0.5) * 140,
-        y: window.innerHeight * 0.26,
-        vx: (Math.random() - 0.5) * 7,
-        vy: Math.random() * -7 - 3,
-        r: 4 + Math.random() * 5,
-        col: colors[i % colors.length],
-        rot: Math.random() * 6,
-      });
+    for (var i = 0; i < 44; i++) {
+      parts.push({ x: window.innerWidth / 2 + (Math.random() - 0.5) * 160, y: window.innerHeight * 0.22, vx: (Math.random() - 0.5) * 7, vy: Math.random() * -7 - 3, r: 4 + Math.random() * 5, col: colors[i % colors.length], rot: Math.random() * 6 });
     }
     var start = performance.now();
     function frame(t) {
@@ -104,45 +121,56 @@ const seasonPct = Math.round(state.seasonProgress * 100);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (var k = 0; k < parts.length; k++) {
         var p = parts[k];
-        p.vy += 0.2;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.rot += 0.2;
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, 1 - dt / 1700);
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rot);
-        ctx.fillStyle = p.col;
-        ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
-        ctx.restore();
+        p.vy += 0.2; p.x += p.vx; p.y += p.vy; p.rot += 0.2;
+        ctx.save(); ctx.globalAlpha = Math.max(0, 1 - dt / 1700); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.col; ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6); ctx.restore();
       }
-      if (dt < 1800) requestAnimationFrame(frame);
-      else canvas.remove();
+      if (dt < 1800) requestAnimationFrame(frame); else canvas.remove();
     }
     requestAnimationFrame(frame);
   })();
 </script>
 
 <style>
-  .hero { padding: 8px 0 22px; }
-  .hero h1 { margin: 6px 0 12px; }
-  .hero-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 14px; }
-  .hero-meta .ti { font-size: 16px; vertical-align: -2px; }
-  .hero-meta .sep { color: var(--faint); }
-  .season-meter { height: 5px; border-radius: 999px; background: var(--surface-2); margin-top: 16px; overflow: hidden; }
-  .season-meter span { display: block; height: 100%; background: var(--pitch); border-radius: 999px; }
+  .hero { position: relative; margin-top: 24px; border-radius: 22px; overflow: hidden; background: var(--pitch); background-image: repeating-linear-gradient(106deg, rgba(255, 255, 255, 0.06) 0 64px, rgba(0, 0, 0, 0.05) 64px 128px); box-shadow: var(--shadow-lg); min-height: 300px; }
+  .bunting { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 6px; }
+  .flag { width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 20px solid; filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.18)); }
+  .circle { position: absolute; right: -90px; top: 50%; transform: translateY(-50%); width: 320px; height: 320px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.16); }
+  .hero-body { position: relative; padding: 52px 40px 36px; color: #fff; }
+  .hero-eyebrow { text-transform: uppercase; letter-spacing: 2.5px; font-size: 13px; font-weight: 800; color: #ffe08a; }
+  .hero h1 { color: #fff; font-size: clamp(52px, 11vw, 104px); margin: 8px 0 14px; text-shadow: 0 3px 0 rgba(0, 0, 0, 0.12); }
+  .hero-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 16px; font-weight: 600; }
+  .hero-meta .ti { color: var(--gold); font-size: 18px; vertical-align: -2px; }
+  .hero-meta .sq { display: inline-block; width: 11px; height: 11px; border-radius: 3px; background: var(--gold); margin-right: 6px; }
+  .hero-meta .slash { color: rgba(255, 255, 255, 0.45); }
+  .prog { margin-top: 26px; max-width: 560px; }
+  .prog-top { display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: 1.5px; font-size: 11px; font-weight: 800; color: rgba(255, 255, 255, 0.85); margin-bottom: 8px; }
+  .prog-bar { height: 8px; border-radius: 999px; background: rgba(0, 0, 0, 0.18); overflow: hidden; }
+  .prog-bar span { display: block; height: 100%; background: var(--gold); border-radius: 999px; }
 
-  .challenge { display: flex; align-items: center; gap: 16px; }
-  .ch-ico { width: 44px; height: 44px; border-radius: 12px; background: rgba(32, 196, 95, 0.14); color: var(--pitch); display: grid; place-items: center; font-size: 24px; flex: none; }
-  .ch-body { flex: 1; min-width: 0; }
-  .ch-desc { font-size: 15px; margin-top: 2px; }
+  .potwrap { margin-top: 22px; }
+  .hint { color: var(--muted); font-size: 13px; font-weight: 600; }
 
-  .feed-list { overflow: hidden; }
-  .feed { display: flex; align-items: center; gap: 13px; padding: 13px 18px; }
-  .feed.br { border-top: 1px solid var(--line); }  .feed-main { flex: 1; min-width: 0; }
-  .feed-reason { font-size: 14px; }
+  .motm { display: flex; align-items: center; gap: 18px; background: linear-gradient(180deg, #f1faf3, #ffffff); border-color: rgba(21, 160, 78, 0.28); }
+  .motm-ico { width: 50px; height: 50px; border-radius: 13px; background: var(--gold); color: #fff; display: grid; place-items: center; font-size: 24px; flex: none; box-shadow: var(--shadow); }
+  .motm-body { flex: 1; min-width: 0; }
+  .motm-desc { font-size: 16px; font-weight: 600; margin-top: 3px; }
+
+  .feed-list { display: flex; flex-direction: column; gap: 10px; }
+  .feed { display: flex; align-items: center; gap: 14px; padding: 14px 18px; }
+  .feed-main { flex: 1; min-width: 0; }
+  .feed-reason { font-size: 15px; font-weight: 600; }
   .feed-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .feed-pts { font-family: var(--font-display); font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; }
-  .feed-pts.pos { color: var(--pitch); }
+  .feed-pts { font-family: var(--font-display); font-size: 22px; }
+  .feed-pts.pos { color: var(--pitch-dark); }
   .feed-pts.neg { color: var(--red); }
+
+  .kickoff { display: flex; align-items: center; gap: 16px; }
+  .kick-ball { width: 46px; height: 46px; border-radius: 50%; background: var(--bg-2); display: grid; place-items: center; font-size: 24px; color: var(--ink); flex: none; }
+  .kick-title { font-weight: 800; font-size: 17px; }
+  .kick-sub { color: var(--muted); font-size: 14px; margin-top: 2px; }
+
+  @media (max-width: 560px) {
+    .hero-body { padding: 46px 22px 28px; }
+    .motm { flex-wrap: wrap; }
+  }
 </style>
