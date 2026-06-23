@@ -1,4 +1,4 @@
-name = "slp-league"
+name = "slp-league-real"
 main = "dist/_worker.js/index.js"
 compatibility_date = "2026-06-23"
 compatibility_flags = ["nodejs_compat"]
