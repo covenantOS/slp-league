@@ -1,0 +1,22 @@
+{
+  "events": [
+    { "id": "e001", "date": "2026-06-09", "playerId": "kdawg", "points": 3, "category": "checkin", "reason": "Daily check-in", "by": "William" },
+    { "id": "e002", "date": "2026-06-10", "playerId": "kdawg", "points": 3, "category": "checkin", "reason": "Daily check-in", "by": "William" },
+    { "id": "e003", "date": "2026-06-11", "playerId": "miggy", "points": 20, "category": "flag_blocker", "reason": "Caught the DataForSEO quota maxed out and flagged it in #seo within the hour", "by": "William" },
+    { "id": "e004", "date": "2026-06-12", "playerId": "daniboy", "points": 10, "category": "deadline", "reason": "Delivered the HD Clean build content on time", "by": "William" },
+    { "id": "e005", "date": "2026-06-13", "playerId": "miggy", "points": 15, "category": "weekly_report", "reason": "Weekly client report delivered on time", "by": "William" },
+    { "id": "e006", "date": "2026-06-13", "playerId": "daniboy", "points": 15, "category": "weekly_report", "reason": "Weekly client report delivered on time", "by": "William" },
+    { "id": "e007", "date": "2026-06-18", "playerId": "miggy", "points": 25, "category": "initiative", "reason": "Built a shared rank-tracking dashboard nobody asked for", "by": "William" },
+    { "id": "e008", "date": "2026-06-18", "playerId": "daniboy", "points": 10, "category": "proof_of_work", "reason": "Logged the full keyword research with screenshots", "by": "William" },
+    { "id": "e009", "date": "2026-06-19", "playerId": "miggy", "points": 3, "category": "checkin", "reason": "Daily check-in", "by": "William" },
+    { "id": "e010", "date": "2026-06-20", "playerId": "miggy", "points": 3, "category": "checkin", "reason": "Daily check-in", "by": "William" },
+    { "id": "e011", "date": "2026-06-20", "playerId": "daniboy", "points": 3, "category": "checkin", "reason": "Daily check-in", "by": "William" },
+    { "id": "e012", "date": "2026-06-20", "playerId": "kdawg", "points": -25, "category": "red_card", "reason": "DataForSEO access broken for 3 weeks and never reported it. It was his only SEO tool", "by": "William" },
+    { "id": "e013", "date": "2026-06-21", "playerId": "miggy", "points": 3, "category": "checkin", "reason": "Daily check-in", "by": "William" },
+    { "id": "e014", "date": "2026-06-21", "playerId": "daniboy", "points": 3, "category": "checkin", "reason": "Daily check-in", "by": "William" },
+    { "id": "e015", "date": "2026-06-21", "playerId": "kdawg", "points": -10, "category": "missed_deadline", "reason": "Audit due Friday, delivered Monday", "by": "William" },
+    { "id": "e016", "date": "2026-06-22", "playerId": "miggy", "points": 3, "category": "checkin", "reason": "Daily check-in", "by": "William" },
+    { "id": "e017", "date": "2026-06-23", "playerId": "miggy", "points": 3, "category": "checkin", "reason": "Daily check-in", "by": "William" },
+    { "id": "e018", "date": "2026-06-23", "playerId": "daniboy", "points": 3, "category": "checkin", "reason": "Daily check-in", "by": "William" }
+  ]
+}

@@ -1,0 +1,71 @@
+---
+import { ramp, money, signed } from '../lib/format.mjs';
+import Badge from './Badge.astro';
+interface Props {
+  p: any;
+  pot: number;
+}
+const { p, pot } = Astro.props;
+const r = ramp(p.color);
+const share = Math.round((p.points / pot) * 100);
+const trendCls = p.last7 > 0 ? 'delta-up' : p.last7 < 0 ? 'delta-down' : 'delta-flat';
+const trendIcon = p.last7 > 0 ? 'trending-up' : p.last7 < 0 ? 'trending-down' : 'minus';
+const leader = p.rank === 1;
+---
+<a class={`row${leader ? ' leader' : ''}`} href={`/players/${p.id}/`}>
+  <div class="rank display tnum">{p.rank}</div>
+  <div class="avatar" style={`background:${r.fill};color:${r.ink}`}>{p.initials}</div>
+  <div class="who">
+    <div class="who-top">
+      <span class="name display">{p.nickname}</span>
+      {leader && <i class="ti ti-crown" style="color:var(--gold)" aria-hidden="true" title="League leader"></i>}
+      <span class="pill tier">{p.tier.name}</span>
+    </div>
+    <div class="who-sub">
+      <span class={trendCls}><i class={`ti ti-${trendIcon}`} aria-hidden="true"></i> {signed(p.last7)} <span class="dim">/ 7d</span></span>
+      {p.streak > 0 && <span class="streak"><i class="ti ti-flame" aria-hidden="true"></i> {p.streak}d</span>}
+      {p.badges.slice(0, 3).map((b: string) => <Badge id={b} size="sm" />)}
+    </div>
+  </div>
+  <div class="score">
+    <div class="dollars display tnum">{money(p.dollars)}</div>
+    <div class="share-bar"><span style={`width:${share}%;background:${r.fill}`}></span></div>
+    <div class="share-txt">{share}% of pot</div>
+  </div>
+</a>
+<style>
+  .row {
+    display: grid;
+    grid-template-columns: 34px 42px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    transition: border-color 0.15s, transform 0.15s, background 0.15s;
+  }
+  .row + .row { margin-top: 10px; }
+  .row:hover { border-color: var(--line-2); background: var(--surface-2); transform: translateY(-1px); }
+  .row.leader { border-color: rgba(246, 180, 0, 0.4); background: linear-gradient(180deg, rgba(246, 180, 0, 0.06), transparent 60%), var(--surface); }
+  .rank { font-size: 24px; color: var(--muted); text-align: center; }
+  .row.leader .rank { color: var(--gold); }
+  .who { min-width: 0; }
+  .who-top { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+  .name { font-size: 20px; letter-spacing: 0.4px; }
+  .who-sub { display: flex; align-items: center; gap: 12px; margin-top: 4px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+  .who-sub .ti { font-size: 14px; vertical-align: -2px; }
+  .dim { color: var(--faint); }
+  .streak { color: var(--c-amber); }
+  .score { text-align: right; min-width: 120px; }
+  .dollars { font-size: 26px; line-height: 1; }
+  .share-bar { height: 5px; border-radius: 999px; background: var(--surface-3); margin: 7px 0 4px; overflow: hidden; }
+  .share-bar span { display: block; height: 100%; border-radius: 999px; }
+  .share-txt { font-size: 11px; color: var(--faint); }
+  @media (max-width: 520px) {
+    .row { grid-template-columns: 26px 38px 1fr auto; gap: 11px; padding: 12px; }
+    .name { font-size: 18px; }
+    .dollars { font-size: 22px; }
+    .score { min-width: 92px; }
+  }
+</style>

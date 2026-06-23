@@ -1,0 +1,18 @@
+{
+  "name": "slp-league",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SLP League - gamified entrepreneur-points bonus league for the ServiceLine Pro team",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "matchday": "node scripts/slack-matchday.mjs",
+    "snapshot": "node scripts/snapshot.mjs",
+    "test:engine": "node scripts/test-engine.mjs"
+  },
+  "dependencies": {
+    "astro": "^5.6.1"
+  }
+}

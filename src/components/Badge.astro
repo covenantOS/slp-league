@@ -1,0 +1,35 @@
+---
+import config from '../data/config.json';
+interface Props {
+  id: string;
+  size?: 'sm' | 'md';
+}
+const { id, size = 'md' } = Astro.props;
+const badges = config.badges as Record<string, { label: string; desc: string; icon: string }>;
+const b = badges[id];
+---
+{
+  b && (
+    <span class={`badge ${size}`} title={b.desc}>
+      <i class={`ti ti-${b.icon}`} aria-hidden="true" />
+      {size === 'md' && <span>{b.label}</span>}
+    </span>
+  )
+}
+<style>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(246, 180, 0, 0.12);
+    border: 1px solid rgba(246, 180, 0, 0.32);
+    color: var(--gold);
+    line-height: 1.3;
+  }
+  .badge .ti { font-size: 15px; }
+  .badge.sm { padding: 4px; }
+</style>

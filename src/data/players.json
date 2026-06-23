@@ -1,0 +1,29 @@
+[
+  {
+    "id": "miggy",
+    "nickname": "Miggy",
+    "fullNickname": "Miggy Mouse",
+    "realName": "Miguel",
+    "initials": "MM",
+    "color": "blue",
+    "slack": "@miggy"
+  },
+  {
+    "id": "daniboy",
+    "nickname": "Daniboy",
+    "fullNickname": "Daniboy",
+    "realName": "Daniel",
+    "initials": "DB",
+    "color": "teal",
+    "slack": "@daniboy"
+  },
+  {
+    "id": "kdawg",
+    "nickname": "Kdawg",
+    "fullNickname": "Kdawg",
+    "realName": "Kevin",
+    "initials": "KD",
+    "color": "coral",
+    "slack": "@kdawg"
+  }
+]

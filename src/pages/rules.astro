@@ -1,0 +1,133 @@
+---
+import Base from '../layouts/Base.astro';
+import { data } from '../lib/league.mjs';
+import { money } from '../lib/format.mjs';
+import config from '../data/config.json';
+
+const earn = config.rubric.filter((c) => c.type === 'earn');
+const lose = config.rubric.filter((c) => c.type === 'lose');
+const tiers = [...config.tiers].reverse();
+const badges = Object.entries(config.badges) as [string, any][];
+const pot = money(data.season.potUSD);
+const seed = data.season.seedPoints;
+---
+
+<Base title="How it works" active="rules">
+  <section class="hero">
+    <div class="eyebrow">The rules of the league</div>
+    <h1>How it works</h1>
+  </section>
+
+  <section class="card card-pad model">
+    <h2>One shared pot. Winner takes the most.</h2>
+    <p>
+      There is one bank of <strong>{pot}</strong> for the whole season. Everyone starts at <strong>{seed} points</strong>.
+      Every point you <span class="g">earn</span> is pulled out of the bank and into your balance. Every point you
+      <span class="r">lose</span> to a penalty gets pushed back into the bank, where your teammates can grab it.
+    </p>
+    <p class="mb0">
+      Whatever you are holding when the season ends is what you get paid, at <strong>1 point = $1</strong>. Points held
+      plus the bank always add up to exactly {pot}. One player can take almost the whole thing.
+    </p>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Earning points</h2></div>
+    <div class="rubric">
+      {
+        earn.map((c) => (
+          <div class="rrow card">
+            <div class="rico pos"><i class={`ti ti-${c.icon}`} aria-hidden="true" /></div>
+            <div class="rlabel">{c.label}</div>
+            <div class="rpts pos">+{c.points}</div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Losing points</h2></div>
+    <div class="rubric">
+      {
+        lose.map((c) => (
+          <div class="rrow card">
+            <div class="rico neg"><i class={`ti ti-${c.icon}`} aria-hidden="true" /></div>
+            <div class="rlabel">{c.label}</div>
+            <div class="rpts neg">{c.points}</div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Divisions</h2><span class="link">your tier rises with your points</span></div>
+    <div class="tiers">
+      {
+        tiers.map((t) => (
+          <div class="tier-card card">
+            <div class="tier-name display">{t.name}</div>
+            <div class="tier-min">{t.min}+ pts</div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Badges</h2></div>
+    <div class="badges">
+      {
+        badges.map(([, b]) => (
+          <div class="bcard card card-pad">
+            <div class="bico"><i class={`ti ti-${b.icon}`} aria-hidden="true" /></div>
+            <div>
+              <div class="blabel">{b.label}</div>
+              <div class="bdesc">{b.desc}</div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero { padding: 8px 0 6px; }
+  .hero h1 { margin-top: 6px; }
+  .model { margin-top: 16px; }
+  .model h2 { font-size: 24px; margin-bottom: 12px; }
+  .model p { color: #cdd8e8; font-size: 15.5px; }
+  .model .mb0 { margin-bottom: 0; }
+  .model strong { color: var(--text); }
+  .model .g { color: var(--pitch); font-weight: 500; }
+  .model .r { color: var(--red); font-weight: 500; }
+
+  .rubric { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .rrow { display: flex; align-items: center; gap: 13px; padding: 12px 14px; }
+  .rico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; flex: none; }
+  .rico.pos { background: rgba(32, 196, 95, 0.13); color: var(--pitch); }
+  .rico.neg { background: rgba(240, 68, 56, 0.13); color: var(--red); }
+  .rlabel { flex: 1; font-size: 14px; }
+  .rpts { font-family: var(--font-display); font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .rpts.pos { color: var(--pitch); }
+  .rpts.neg { color: var(--red); }
+
+  .tiers { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .tier-card { padding: 16px 12px; text-align: center; }
+  .tier-name { font-size: 19px; }
+  .tier-min { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .badges { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .bcard { display: flex; align-items: center; gap: 14px; }
+  .bico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: rgba(246, 180, 0, 0.13); color: var(--gold); flex: none; }
+  .blabel { font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+  .bdesc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  @media (max-width: 640px) {
+    .rubric { grid-template-columns: 1fr; }
+    .tiers { grid-template-columns: repeat(2, 1fr); }
+    .badges { grid-template-columns: 1fr; }
+  }
+</style>

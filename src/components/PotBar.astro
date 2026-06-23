@@ -1,0 +1,62 @@
+---
+import { ramp, money } from '../lib/format.mjs';
+interface Props {
+  state: any;
+}
+const { state } = Astro.props;
+const total = state.pot;
+const segs = state.players.map((p: any) => ({
+  label: p.nickname,
+  value: p.points,
+  color: ramp(p.color).fill,
+  ink: ramp(p.color).ink,
+}));
+segs.push({ label: 'Bank', value: state.bank, color: '#2f3e57', ink: '#d7e0ee' });
+---
+<div class="pot card">
+  <div class="pot-head">
+    <div>
+      <div class="eyebrow">The pot</div>
+      <div class="pot-total display tnum">{money(total)}</div>
+    </div>
+    <div class="pot-bank">
+      <div class="pot-bank-num display tnum">{money(state.bank)}</div>
+      <div class="pot-bank-lbl">unclaimed in the bank</div>
+    </div>
+  </div>
+
+  <div class="pot-bar" role="img" aria-label={`Pot split: ${segs.map((s: any) => `${s.label} ${money(s.value)}`).join(', ')}`}>
+    {
+      segs.map((s: any) => {
+        const w = (s.value / total) * 100;
+        return (
+          <div class="seg" style={`width:${w}%;background:${s.color};color:${s.ink}`} title={`${s.label}: ${money(s.value)}`}>
+            {w >= 13 && (
+              <span class="seg-lbl">
+                {s.label} {money(s.value)}
+              </span>
+            )}
+          </div>
+        );
+      })
+    }
+  </div>
+  <p class="pot-note">Every point a player claims comes out of the bank. Every penalty drops back in for the others to grab.</p>
+</div>
+<style>
+  .pot { padding: 18px 20px 20px; }
+  .pot-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .pot-total { font-size: 40px; line-height: 1; color: var(--gold); }
+  .pot-bank { text-align: right; }
+  .pot-bank-num { font-size: 22px; line-height: 1; color: var(--text); }
+  .pot-bank-lbl { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .pot-bar { display: flex; height: 38px; border-radius: 11px; overflow: hidden; border: 1px solid var(--line); }
+  .seg { display: flex; align-items: center; padding: 0 10px; min-width: 2px; box-shadow: inset -1px 0 0 rgba(9, 13, 22, 0.35); overflow: hidden; }
+  .seg-lbl { font-family: var(--font-display); font-weight: 500; font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pot-note { color: var(--muted); font-size: 13px; margin: 12px 0 0; }
+  @media (max-width: 520px) {
+    .pot-total { font-size: 32px; }
+    .pot-bar { height: 32px; }
+    .seg-lbl { font-size: 11px; }
+  }
+</style>

@@ -1,0 +1,57 @@
+---
+import Base from '../../layouts/Base.astro';
+import Badge from '../../components/Badge.astro';
+import { getState } from '../../lib/league.mjs';
+import { ramp, money, signed } from '../../lib/format.mjs';
+
+const state = getState();
+---
+
+<Base title="Players" active="players">
+  <section class="hero">
+    <div class="eyebrow">The squad</div>
+    <h1>Players</h1>
+  </section>
+
+  <div class="grid">
+    {
+      state.players.map((p: any) => {
+        const r = ramp(p.color);
+        const share = Math.round((p.points / state.pot) * 100);
+        return (
+          <a class="pcard card" href={`/players/${p.id}/`}>
+            <div class="pc-top">
+              <div class="avatar" style={`background:${r.fill};color:${r.ink}`}>{p.initials}</div>
+              <div class="pc-rank display">#{p.rank}</div>
+            </div>
+            <div class="pc-name display">{p.nickname}</div>
+            <div class="pc-tier"><span class="pill tier">{p.tier.name}</span></div>
+            <div class="pc-dollars display tnum">{money(p.dollars)}</div>
+            <div class="pc-sub">
+              {p.points} pts &middot; {share}% of pot &middot; <span class={p.last7 < 0 ? 'neg' : 'pos'}>{signed(p.last7)} / 7d</span>
+            </div>
+            <div class="pc-badges">{p.badges.map((b: string) => <Badge id={b} size="sm" />)}</div>
+          </a>
+        );
+      })
+    }
+  </div>
+</Base>
+
+<style>
+  .hero { padding: 8px 0 6px; }
+  .hero h1 { margin-top: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 20px; }
+  .pcard { padding: 18px; transition: border-color 0.15s, transform 0.15s, background 0.15s; }
+  .pcard:hover { border-color: var(--line-2); transform: translateY(-2px); background: var(--surface-2); }
+  .pc-top { display: flex; align-items: center; justify-content: space-between; }
+  .pc-rank { font-size: 22px; color: var(--faint); }
+  .pc-name { font-size: 24px; margin-top: 12px; }
+  .pc-tier { margin-top: 7px; }
+  .pc-dollars { font-size: 30px; color: var(--gold); margin-top: 12px; line-height: 1; }
+  .pc-sub { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .pc-sub .pos { color: var(--pitch); }
+  .pc-sub .neg { color: var(--red); }
+  .pc-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; min-height: 26px; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+</style>

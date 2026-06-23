@@ -1,0 +1,123 @@
+---
+import Base from '../../layouts/Base.astro';
+import Badge from '../../components/Badge.astro';
+import Sparkline from '../../components/Sparkline.astro';
+import { getState, data } from '../../lib/league.mjs';
+import { ramp, money, signed, shortDate } from '../../lib/format.mjs';
+import config from '../../data/config.json';
+
+export function getStaticPaths() {
+  return data.players.map((p) => ({ params: { id: p.id } }));
+}
+const { id } = Astro.params;
+const state = getState();
+const p = state.players.find((x: any) => x.id === id);
+if (!p) throw new Error(`Unknown player: ${id}`);
+const r = ramp(p.color);
+const rubric = Object.fromEntries(config.rubric.map((c) => [c.key, c])) as Record<string, any>;
+const seed = data.season.seedPoints;
+const series = [seed, ...p.history.map((h: any) => h.balanceAfter)];
+const hist = [...p.history].reverse();
+const share = Math.round((p.points / state.pot) * 100);
+const ordinal = ['', '1st', '2nd', '3rd'][p.rank] || `${p.rank}th`;
+---
+
+<Base title={p.nickname} active="players">
+  <a class="back" href="/players/"><i class="ti ti-arrow-left" aria-hidden="true"></i> All players</a>
+
+  <section class="phead card card-pad">
+    <div class="avatar lg" style={`background:${r.fill};color:${r.ink}`}>{p.initials}</div>
+    <div class="pmeta">
+      <div class="pname display">{p.fullNickname}</div>
+      <div class="preal">{p.realName} &middot; {ordinal} place &middot; <span class="pill tier">{p.tier.name}</span></div>
+      <div class="pbadges">
+        {p.badges.length ? p.badges.map((b: string) => <Badge id={b} />) : <span class="nobadge">No badges yet this season</span>}
+      </div>
+    </div>
+    <div class="pscore">
+      <div class="pdollars display tnum">{money(p.dollars)}</div>
+      <div class="ppts">{p.points} pts &middot; {share}% of pot</div>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat card card-pad"><div class="stat-num display tnum pos">{signed(p.earned)}</div><div class="stat-lbl">earned</div></div>
+    <div class="stat card card-pad"><div class="stat-num display tnum neg">{p.lost ? '-' + p.lost : '0'}</div><div class="stat-lbl">lost to penalties</div></div>
+    <div class="stat card card-pad"><div class="stat-num display tnum">{p.streak}<span class="u">d</span></div><div class="stat-lbl">check-in streak</div></div>
+    <div class="stat card card-pad"><div class={`stat-num display tnum ${p.last7 < 0 ? 'neg' : ''}`}>{signed(p.last7)}</div><div class="stat-lbl">last 7 days</div></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Season trend</h2><span class="link">started at {seed} pts</span></div>
+    <div class="card card-pad"><Sparkline values={series} color={r.fill} /></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Point log</h2><span class="link">{p.history.length} entries</span></div>
+    <div class="card log">
+      {
+        hist.map((h: any, i: number) => {
+          const meta = rubric[h.category] || { label: h.category, icon: 'point' };
+          return (
+            <div class={`logrow${i > 0 ? ' br' : ''}`}>
+              <div class={`logico ${h.applied >= 0 ? 'pos' : 'neg'}`}><i class={`ti ti-${meta.icon}`} aria-hidden="true" /></div>
+              <div class="logmain">
+                <div class="logreason">{h.reason}</div>
+                <div class="logsub">{shortDate(h.date)} &middot; {meta.label}</div>
+              </div>
+              <div class="logpts">
+                <span class={h.applied >= 0 ? 'pos' : 'neg'}>{signed(h.applied)}</span>
+                <span class="logbal">{h.balanceAfter} pts</span>
+              </div>
+            </div>
+          );
+        })
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 500; margin-bottom: 14px; }
+  .back:hover { color: var(--pitch); }
+  .back .ti { font-size: 16px; }
+
+  .phead { display: flex; align-items: center; gap: 18px; }
+  .avatar.lg { width: 72px; height: 72px; border-radius: 18px; font-size: 26px; }
+  .pmeta { flex: 1; min-width: 0; }
+  .pname { font-size: 30px; line-height: 1.05; }
+  .preal { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .pbadges { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+  .nobadge { color: var(--faint); font-size: 13px; }
+  .pscore { text-align: right; }
+  .pdollars { font-size: 38px; line-height: 1; color: var(--gold); }
+  .ppts { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+  .stat { text-align: center; padding: 16px 10px; }
+  .stat-num { font-size: 28px; line-height: 1; }
+  .stat-num .u { font-size: 16px; color: var(--muted); }
+  .stat-num.pos { color: var(--pitch); }
+  .stat-num.neg { color: var(--red); }
+  .stat-lbl { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  .log { overflow: hidden; }
+  .logrow { display: flex; align-items: center; gap: 13px; padding: 13px 18px; }
+  .logrow.br { border-top: 1px solid var(--line); }
+  .logico { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-size: 17px; flex: none; }
+  .logico.pos { background: rgba(32, 196, 95, 0.13); color: var(--pitch); }
+  .logico.neg { background: rgba(240, 68, 56, 0.13); color: var(--red); }
+  .logmain { flex: 1; min-width: 0; }
+  .logreason { font-size: 14px; }
+  .logsub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .logpts { text-align: right; font-family: var(--font-display); }
+  .logpts .pos { color: var(--pitch); font-weight: 600; font-size: 18px; }
+  .logpts .neg { color: var(--red); font-weight: 600; font-size: 18px; }
+  .logbal { display: block; font-size: 11px; color: var(--faint); font-family: var(--font-body); }
+
+  @media (max-width: 560px) {
+    .phead { flex-wrap: wrap; }
+    .pscore { text-align: left; width: 100%; border-top: 1px solid var(--line); padding-top: 12px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>

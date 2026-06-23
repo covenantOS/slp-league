@@ -1,0 +1,9 @@
+{
+  "id": "T1",
+  "name": "Season 1",
+  "startDate": "2026-06-08",
+  "endDate": "2026-12-08",
+  "potUSD": 2500,
+  "seedPoints": 100,
+  "pointValueUSD": 1
+}
