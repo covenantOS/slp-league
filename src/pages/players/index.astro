@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Badge from '../../components/Badge.astro';
+import Avatar from '../../components/Avatar.astro';
 import { getGame, computeState } from '../../lib/league.mjs';
 import { ramp, money, signed } from '../../lib/format.mjs';
 
@@ -21,7 +22,7 @@ const state = computeState(await getGame(Astro.locals?.runtime?.env));
         return (
           <a class="pcard card" href={`/players/${p.id}/`}>
             <div class="pc-top">
-              <div class="avatar" style={`background:${r.fill};color:${r.ink}`}>{p.initials}</div>
+              <Avatar player={p} size={44} radius={12} />
               <div class="pc-rank display">#{p.rank}</div>
             </div>
             <div class="pc-name display">{p.nickname}</div>

@@ -37,8 +37,10 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
 
       .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
       .pcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
-      .pc-h { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
-      .pc-id { font-size: 15px; }
+      .pc-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
+      .pc-av { width: 30px; height: 30px; border-radius: 9px; flex: none; object-fit: cover; }
+      .pc-av-ini { display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 12px; }
+      .pc-id { font-size: 15px; flex: 1; min-width: 0; }
       .pc-id b { font-family: var(--font-display); font-size: 20px; }
       .pc-id .tier { font-size: 11px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 999px; padding: 2px 8px; margin-left: 4px; }
       .pc-d { text-align: right; }
@@ -124,6 +126,13 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
           return n;
         }
 
+        var ARAMP = { blue: { fill: '#85B7EB', ink: '#042C53' }, teal: { fill: '#5DCAA5', ink: '#04342C' }, coral: { fill: '#F0997B', ink: '#4A1B0C' }, amber: { fill: '#EF9F27', ink: '#412402' }, purple: { fill: '#7F77DD', ink: '#26215C' }, gray: { fill: '#B4B2A9', ink: '#2C2C2A' } };
+        function avatarNode(p) {
+          if (p.avatar) return el('img', { class: 'pc-av', src: p.avatar, alt: p.nickname });
+          var r = ARAMP[p.color] || ARAMP.gray;
+          return el('div', { class: 'pc-av pc-av-ini', style: 'background:' + r.fill + ';color:' + r.ink, text: p.initials });
+        }
+
         async function loadState() {
           var res = await fetch('/api/state.json');
           STATE = await res.json();
@@ -161,6 +170,7 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
           var lose = STATE.config.rubric.filter(function (c) { return c.type === 'lose'; });
           return el('div', { class: 'pcard', 'data-card': '' }, [
             el('div', { class: 'pc-h' }, [
+              avatarNode(p),
               el('div', { class: 'pc-id' }, ['#' + p.rank + ' ', el('b', { text: p.nickname }), el('span', { class: 'tier', text: p.tier.name })]),
               el('div', { class: 'pc-d' }, [el('b', { text: money(p.dollars) }), el('span', { text: p.points + ' pts' })]),
             ]),

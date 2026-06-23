@@ -47,6 +47,17 @@ Every change updates the public board instantly for the whole team. The code is 
 the server for every write, so the board can't be edited without it. (It is a low-stakes
 internal tool; the code is light protection, not a vault.)
 
+## Player profiles
+
+Players go to **`/me`**, pick themselves, and set a personal **code** (4 to 8 digits). The first
+code submitted for a player claims that profile; after that the code unlocks editing it (and only
+it). From there they set a **photo** and a **tagline**, which show on the board, their profile
+page, and the activity feed.
+
+Photos are resized in the browser to a small square and stored as a data URL on the player record
+in KV (no separate image host). A player's code is kept server-side only and is never sent to any
+page or API response.
+
 ## How the data works
 
 Live game state (season, players, events) lives in one **Cloudflare KV** value (binding
@@ -60,12 +71,13 @@ badges, challenge) always come from `src/data/config.json` in code.
 src/
   data/        season.json, players.json, events.json (empty on a fresh season) + config.json (rules)
   lib/         engine.mjs (scoring), store.mjs (KV/in-memory), league.mjs, format.mjs
-  components/  PotBar, StandingRow, Badge, Sparkline
+  components/  PotBar, StandingRow, Badge, Sparkline, Avatar
   layouts/     Base.astro
   pages/       index, players/[id], players/index, history, rules
   pages/seasons/ index.astro, [id].astro   archive of completed seasons
+  pages/me/    index.astro                 player profile editor (per-player code)
   pages/admin/ index.astro                 the control room (code 4221)
-  pages/api/   mutate.js, state.json.js     read/write the KV game + archive
+  pages/api/   mutate.js, profile.js, state.json.js   game/archive + profile writes
 scripts/       test-engine.mjs
 ```
 

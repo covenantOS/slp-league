@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import PotBar from '../components/PotBar.astro';
 import StandingRow from '../components/StandingRow.astro';
+import Avatar from '../components/Avatar.astro';
 import { getGame, computeState, activityFeed } from '../lib/league.mjs';
 import { money, signed, shortDate, ramp } from '../lib/format.mjs';
 import config from '../data/config.json';
@@ -56,9 +57,7 @@ const seasonPct = Math.round(state.seasonProgress * 100);
       {
         recent.map((e: any, i: number) => (
           <div class={`feed${i > 0 ? ' br' : ''}`}>
-            <div class="favatar" style={`background:${ramp(e.player.color).fill};color:${ramp(e.player.color).ink}`}>
-              {e.player.initials}
-            </div>
+            <Avatar player={e.player} size={34} radius={9} />
             <div class="feed-main">
               <div class="feed-reason">{e.reason}</div>
               <div class="feed-sub">

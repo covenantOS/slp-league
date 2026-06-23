@@ -1,0 +1,227 @@
+---
+import '../../styles/global.css';
+const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>My profile — SLP League</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style is:global>
+      .me-top { max-width: 560px; margin: 0 auto; padding: 18px; display: flex; align-items: center; gap: 12px; }
+      .me-top a { color: var(--muted); font-size: 13px; font-weight: 500; }
+      .me-top a:hover { color: var(--pitch); }
+      .me-top span { font-family: var(--font-display); font-weight: 600; margin-left: auto; }
+      .me-wrap { max-width: 560px; margin: 0 auto; padding: 0 18px 40px; }
+      .step-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+      .step-card h1 { font-size: 24px; margin-bottom: 4px; }
+      .step-card p.sub { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+
+      .pick-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .pick-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 10px; text-align: center; cursor: pointer; transition: border-color 0.15s, transform 0.15s, background 0.15s; }
+      .pick-card:hover { border-color: var(--line-2); transform: translateY(-2px); background: var(--surface-2); }
+      .pick-name { font-family: var(--font-display); font-weight: 600; font-size: 16px; margin-top: 10px; }
+      .pick-meta { font-size: 11px; color: var(--faint); margin-top: 2px; }
+
+      .av { display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; }
+      .av-lg { width: 120px; height: 120px; border-radius: 24px; font-size: 42px; margin: 0 auto; object-fit: cover; }
+      .av-md { width: 60px; height: 60px; border-radius: 16px; font-size: 22px; margin: 0 auto; object-fit: cover; }
+
+      .dropzone { border: 1.5px dashed var(--line-2); border-radius: var(--radius); padding: 18px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; margin-top: 16px; }
+      .dropzone:hover, .dropzone.over { border-color: var(--pitch); background: rgba(32, 196, 95, 0.06); }
+      .dropzone .hint { color: var(--muted); font-size: 13px; margin-top: 10px; }
+
+      .field { margin-top: 16px; }
+      .field label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 6px; }
+      .field input { width: 100%; height: 44px; background: var(--bg); color: var(--text); border: 1px solid var(--line-2); border-radius: var(--radius-sm); padding: 0 12px; font-size: 15px; }
+      .field input.code { letter-spacing: 6px; text-align: center; font-family: var(--font-display); font-size: 20px; }
+      .row { display: flex; gap: 10px; margin-top: 18px; }
+      .btn { flex: 1; height: 46px; border-radius: var(--radius-sm); border: 0; font-family: var(--font-display); font-weight: 600; font-size: 16px; cursor: pointer; }
+      .btn.primary { background: var(--pitch); color: var(--pitch-ink); }
+      .btn.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--line-2); flex: 0 0 auto; padding: 0 18px; }
+      .btn.link { background: none; color: var(--muted); border: 0; flex: 0 0 auto; }
+      .err { color: var(--red); font-size: 13px; margin-top: 10px; min-height: 18px; }
+      .removelink { display: inline-block; margin-top: 12px; color: var(--faint); font-size: 12px; cursor: pointer; background: none; border: 0; }
+      .removelink:hover { color: var(--red); }
+      .done { text-align: center; }
+      .done .ti { font-size: 44px; color: var(--pitch); }
+    </style>
+  </head>
+  <body>
+    {!persistent && <div class="warnbar">Changes are not being saved. This is local preview, or the <b>LEAGUE</b> KV namespace is not bound on Cloudflare.</div>}
+    <div class="me-top"><a href="/">&larr; Board</a><span>My profile</span></div>
+    <div class="me-wrap" id="app"></div>
+
+    <script is:inline>
+      (function () {
+        var app = document.getElementById('app');
+        var RAMP = {
+          blue: { fill: '#85B7EB', ink: '#042C53' }, teal: { fill: '#5DCAA5', ink: '#04342C' },
+          coral: { fill: '#F0997B', ink: '#4A1B0C' }, amber: { fill: '#EF9F27', ink: '#412402' },
+          purple: { fill: '#7F77DD', ink: '#26215C' }, gray: { fill: '#B4B2A9', ink: '#2C2C2A' },
+        };
+        var ramp = function (c) { return RAMP[c] || RAMP.gray; };
+        var S = { players: [], sel: null, authed: false, code: '', avatar: undefined, tagline: '' };
+
+        function el(tag, attrs, kids) {
+          var n = document.createElement(tag);
+          attrs = attrs || {};
+          Object.keys(attrs).forEach(function (k) {
+            if (k === 'text') n.textContent = attrs[k];
+            else if (k === 'on') Object.keys(attrs[k]).forEach(function (ev) { n.addEventListener(ev, attrs[k][ev]); });
+            else n.setAttribute(k, attrs[k]);
+          });
+          (kids || []).forEach(function (c) { if (c == null) return; n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+          return n;
+        }
+        function avatarNode(player, cls, previewSrc) {
+          var src = previewSrc !== undefined ? previewSrc : player.avatar;
+          if (src) return el('img', { class: 'av ' + cls, src: src, alt: player.nickname });
+          var r = ramp(player.color);
+          return el('div', { class: 'av ' + cls, style: 'background:' + r.fill + ';color:' + r.ink, text: player.initials });
+        }
+        function resize(file, size) {
+          return new Promise(function (res, rej) {
+            var img = new Image();
+            var url = URL.createObjectURL(file);
+            img.onload = function () {
+              var c = document.createElement('canvas'); c.width = size; c.height = size;
+              var ctx = c.getContext('2d');
+              var scale = Math.max(size / img.width, size / img.height);
+              var w = img.width * scale, h = img.height * scale;
+              ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+              URL.revokeObjectURL(url);
+              res(c.toDataURL('image/jpeg', 0.82));
+            };
+            img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('bad image')); };
+            img.src = url;
+          });
+        }
+        async function api(payload) {
+          var res = await fetch('/api/profile', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+          var data = await res.json();
+          return { ok: res.ok, data: data };
+        }
+
+        function render() {
+          app.replaceChildren(!S.sel ? pickStep() : !S.authed ? codeStep() : editStep());
+        }
+
+        function pickStep() {
+          return el('div', null, [
+            el('div', { class: 'step-card' }, [
+              el('h1', { text: 'Who are you?' }),
+              el('p', { class: 'sub', text: 'Pick yourself to set up your profile.' }),
+              el('div', { class: 'pick-grid' }, S.players.map(function (p) {
+                return el('div', { class: 'pick-card', on: { click: function () { S.sel = p; S.tagline = p.tagline || ''; render(); } } }, [
+                  avatarNode(p, 'av-md'),
+                  el('div', { class: 'pick-name', text: p.nickname }),
+                  el('div', { class: 'pick-meta', text: p.hasCode ? 'has a code' : 'no code yet' }),
+                ]);
+              })),
+            ]),
+          ]);
+        }
+
+        function codeStep() {
+          var input = el('input', { class: 'code', type: 'password', inputmode: 'numeric', maxlength: '8', placeholder: 'code', autocomplete: 'off' });
+          var err = el('div', { class: 'err' });
+          var go = async function () {
+            var code = input.value.trim();
+            if (!/^\d{4,8}$/.test(code)) { err.textContent = 'Use 4 to 8 digits.'; return; }
+            var r = await api({ playerId: S.sel.id, code: code });
+            if (!r.ok) { err.textContent = r.data.error || 'Could not continue'; input.value = ''; return; }
+            S.authed = true; S.code = code; S.sel = r.data.player; S.tagline = r.data.player.tagline || ''; render();
+          };
+          input.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+          return el('div', { class: 'step-card' }, [
+            avatarNode(S.sel, 'av-md'),
+            el('h1', { text: S.sel.nickname, style: 'text-align:center;margin-top:10px' }),
+            el('p', { class: 'sub', style: 'text-align:center', text: S.sel.hasCode ? 'Enter your code to edit your profile.' : 'Pick a code (4 to 8 digits) you will remember. This becomes yours.' }),
+            input, err,
+            el('div', { class: 'row' }, [
+              el('button', { class: 'btn ghost', text: 'Back', on: { click: function () { S.sel = null; render(); } } }),
+              el('button', { class: 'btn primary', text: S.sel.hasCode ? 'Unlock' : 'Claim it', on: { click: go } }),
+            ]),
+          ]);
+        }
+
+        function editStep() {
+          var preview = avatarNode(S.sel, 'av-lg', S.avatar);
+          var fileInput = el('input', { type: 'file', accept: 'image/*', style: 'display:none' });
+          var dz = el('div', { class: 'dropzone' }, [el('div', { style: 'font-weight:500', text: 'Drop a photo or click to choose' }), el('div', { class: 'hint', text: 'Square works best. It gets cropped and shrunk automatically.' })]);
+          var tagline = el('input', { type: 'text', maxlength: '80', value: S.tagline || '', placeholder: 'e.g. Closer. Caffeine. Page-one rankings.' });
+          var newCode = el('input', { class: 'code', type: 'password', inputmode: 'numeric', maxlength: '8', placeholder: 'leave blank to keep' });
+          var err = el('div', { class: 'err' });
+
+          var setFile = function (file) {
+            if (!file || !/^image\//.test(file.type)) { err.textContent = 'That is not an image.'; return; }
+            resize(file, 256).then(function (dataUrl) {
+              S.avatar = dataUrl; err.textContent = ''; var fresh = avatarNode(S.sel, 'av-lg', S.avatar); preview.replaceWith(fresh); preview = fresh;
+            }).catch(function () { err.textContent = 'Could not read that image.'; });
+          };
+          dz.addEventListener('click', function () { fileInput.click(); });
+          fileInput.addEventListener('change', function () { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+          dz.addEventListener('dragover', function (e) { e.preventDefault(); dz.classList.add('over'); });
+          dz.addEventListener('dragleave', function () { dz.classList.remove('over'); });
+          dz.addEventListener('drop', function (e) { e.preventDefault(); dz.classList.remove('over'); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
+
+          var removeBtn = el('button', { class: 'removelink', text: 'Remove photo', on: { click: function () { S.avatar = null; var fresh = avatarNode(S.sel, 'av-lg', null); preview.replaceWith(fresh); preview = fresh; } } });
+
+          var save = async function () {
+            var payload = { playerId: S.sel.id, code: S.code, tagline: tagline.value };
+            if (S.avatar !== undefined) payload.avatar = S.avatar;
+            if (newCode.value.trim()) payload.newCode = newCode.value.trim();
+            err.textContent = 'Saving...';
+            var r = await api(payload);
+            if (!r.ok) { err.textContent = r.data.error || 'Could not save'; return; }
+            if (newCode.value.trim()) S.code = newCode.value.trim();
+            S.sel = r.data.player; S.avatar = undefined;
+            app.replaceChildren(doneStep());
+          };
+
+          return el('div', { class: 'step-card' }, [
+            el('div', { style: 'text-align:center' }, [preview, removeBtn]),
+            fileInput, dz,
+            el('div', { class: 'field' }, [el('label', { text: 'Tagline' }), tagline]),
+            el('div', { class: 'field' }, [el('label', { text: 'Change your code (optional)' }), newCode]),
+            err,
+            el('div', { class: 'row' }, [
+              el('button', { class: 'btn ghost', text: 'Switch player', on: { click: function () { S.sel = null; S.authed = false; S.avatar = undefined; render(); } } }),
+              el('button', { class: 'btn primary', text: 'Save profile', on: { click: save } }),
+            ]),
+          ]);
+        }
+
+        function doneStep() {
+          return el('div', { class: 'step-card done' }, [
+            avatarNode(S.sel, 'av-lg'),
+            el('h1', { text: 'Looking good, ' + S.sel.nickname, style: 'margin-top:14px' }),
+            el('p', { class: 'sub', text: S.sel.tagline || 'Profile saved.' }),
+            el('div', { class: 'row' }, [
+              el('a', { class: 'btn ghost', href: '/players/' + S.sel.id + '/', text: 'My profile', style: 'display:grid;place-items:center;text-decoration:none' }),
+              el('a', { class: 'btn primary', href: '/', text: 'The board', style: 'display:grid;place-items:center;text-decoration:none' }),
+            ]),
+          ]);
+        }
+
+        (async function init() {
+          try {
+            var res = await fetch('/api/state.json');
+            var st = await res.json();
+            S.players = st.players.slice().sort(function (a, b) { return a.nickname.localeCompare(b.nickname); });
+          } catch (e) { S.players = []; }
+          render();
+        })();
+      })();
+    </script>
+  </body>
+</html>

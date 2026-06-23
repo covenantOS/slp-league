@@ -1,6 +1,7 @@
 ---
 import { ramp, money, signed } from '../lib/format.mjs';
 import Badge from './Badge.astro';
+import Avatar from './Avatar.astro';
 interface Props {
   p: any;
   pot: number;
@@ -14,7 +15,7 @@ const leader = p.rank === 1;
 ---
 <a class={`row${leader ? ' leader' : ''}`} href={`/players/${p.id}/`}>
   <div class="rank display tnum">{p.rank}</div>
-  <div class="avatar" style={`background:${r.fill};color:${r.ink}`}>{p.initials}</div>
+  <Avatar player={p} size={42} radius={12} />
   <div class="who">
     <div class="who-top">
       <span class="name display">{p.nickname}</span>

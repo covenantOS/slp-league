@@ -67,7 +67,10 @@ export function computeState(data) {
   const today = season.asOf || isoDay(new Date());
 
   const state = new Map();
-  for (const p of players) state.set(p.id, { ...p, points: seed, earned: 0, lost: 0, history: [] });
+  for (const p of players) {
+    const { passcode, ...pub } = p; // never expose a player's passcode in computed state
+    state.set(p.id, { ...pub, hasCode: !!passcode, points: seed, earned: 0, lost: 0, history: [] });
+  }
 
   if (seed * players.length > season.potUSD) {
     throw new Error(`Invalid config: seed (${seed}) x ${players.length} players exceeds the pot ($${season.potUSD}).`);

@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import Badge from '../../components/Badge.astro';
 import Sparkline from '../../components/Sparkline.astro';
+import Avatar from '../../components/Avatar.astro';
 import { getGame, computeState } from '../../lib/league.mjs';
 import { ramp, money, signed, shortDate } from '../../lib/format.mjs';
 
@@ -23,10 +24,11 @@ const ordinal = ['', '1st', '2nd', '3rd'][p.rank] || `${p.rank}th`;
   <a class="back" href="/players/"><i class="ti ti-arrow-left" aria-hidden="true"></i> All players</a>
 
   <section class="phead card card-pad">
-    <div class="avatar lg" style={`background:${r.fill};color:${r.ink}`}>{p.initials}</div>
+    <Avatar player={p} size={72} radius={18} />
     <div class="pmeta">
       <h1 class="pname display">{p.fullNickname}</h1>
       <div class="preal">{p.realName} &middot; {ordinal} place &middot; <span class="pill tier">{p.tier.name}</span></div>
+      {p.tagline && <div class="ptag">{p.tagline}</div>}
       <div class="pbadges">
         {p.badges.length ? p.badges.map((b: string) => <Badge id={b} />) : <span class="nobadge">No badges yet this season</span>}
       </div>
@@ -83,6 +85,7 @@ const ordinal = ['', '1st', '2nd', '3rd'][p.rank] || `${p.rank}th`;
   .pmeta { flex: 1; min-width: 0; }
   .pname { font-size: 30px; line-height: 1.05; }
   .preal { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .ptag { color: var(--text); font-size: 14px; margin-top: 6px; }
   .pbadges { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
   .nobadge { color: var(--faint); font-size: 13px; }
   .pscore { text-align: right; }

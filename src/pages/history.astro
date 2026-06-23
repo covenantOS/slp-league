@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { getGame, activityFeed } from '../lib/league.mjs';
 import { ramp, signed, shortDate } from '../lib/format.mjs';
+import Avatar from '../components/Avatar.astro';
 
 const game = await getGame(Astro.locals?.runtime?.env);
 const feed = activityFeed(game);
@@ -34,9 +35,7 @@ for (const e of feed) {
             const r = ramp(e.player.color);
             return (
               <div class={`feed${i > 0 ? ' br' : ''}`}>
-                <div class="favatar" style={`background:${r.fill};color:${r.ink}`}>
-                  {e.player.initials}
-                </div>
+                <Avatar player={e.player} size={34} radius={9} />
                 <div class="feed-main">
                   <div class="feed-reason">{e.reason}</div>
                   <div class="feed-sub">

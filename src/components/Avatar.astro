@@ -1,0 +1,24 @@
+---
+import { ramp } from '../lib/format.mjs';
+interface Props {
+  player: any;
+  size?: number;
+  radius?: number;
+}
+const { player, size = 42, radius = 12 } = Astro.props;
+const r = ramp(player.color);
+const dim = `width:${size}px;height:${size}px;border-radius:${radius}px`;
+---
+{
+  player.avatar ? (
+    <img src={player.avatar} alt={player.nickname} class="av-img" style={`${dim};object-fit:cover;display:block`} />
+  ) : (
+    <div class="av-ini" style={`${dim};background:${r.fill};color:${r.ink};font-size:${Math.round(size * 0.36)}px`}>
+      {player.initials}
+    </div>
+  )
+}
+<style>
+  .av-ini { display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; letter-spacing: 0.5px; flex: none; }
+  .av-img { flex: none; }
+</style>
