@@ -43,3 +43,27 @@ export async function setGame(env, game) {
   }
   memory = persist;
 }
+
+// Completed seasons, oldest first. Each entry is a frozen snapshot of the final
+// standings + events for that season.
+const ARCHIVE_KEY = 'archive';
+let memArchive = null;
+
+export async function getArchive(env) {
+  const kv = env && env.LEAGUE;
+  if (kv) {
+    const raw = await kv.get(ARCHIVE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }
+  if (!memArchive) memArchive = [];
+  return memArchive;
+}
+
+export async function setArchive(env, archive) {
+  const kv = env && env.LEAGUE;
+  if (kv) {
+    await kv.put(ARCHIVE_KEY, JSON.stringify(archive));
+    return;
+  }
+  memArchive = archive;
+}

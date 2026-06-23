@@ -6,7 +6,29 @@ import { computeState, activityFeed, biggestMover } from '../src/lib/engine.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const load = (f) => JSON.parse(readFileSync(join(root, 'src/data', f), 'utf8'));
-const data = { season: load('season.json'), players: load('players.json'), events: load('events.json').events, config: load('config.json') };
+// Inline event fixture so the test is independent of the seed file (which is
+// empty for a fresh season). season/players/config still come from src/data.
+const FIXTURE_EVENTS = [
+  { id: 'e001', date: '2026-06-09', playerId: 'kdawg', points: 3, category: 'checkin', reason: 'Daily check-in' },
+  { id: 'e002', date: '2026-06-10', playerId: 'kdawg', points: 3, category: 'checkin', reason: 'Daily check-in' },
+  { id: 'e003', date: '2026-06-11', playerId: 'miggy', points: 20, category: 'flag_blocker', reason: 'Flagged a broken tool' },
+  { id: 'e004', date: '2026-06-12', playerId: 'daniboy', points: 10, category: 'deadline', reason: 'Hit a deadline' },
+  { id: 'e005', date: '2026-06-13', playerId: 'miggy', points: 15, category: 'weekly_report', reason: 'Weekly report' },
+  { id: 'e006', date: '2026-06-13', playerId: 'daniboy', points: 15, category: 'weekly_report', reason: 'Weekly report' },
+  { id: 'e007', date: '2026-06-18', playerId: 'miggy', points: 25, category: 'initiative', reason: 'Initiative' },
+  { id: 'e008', date: '2026-06-18', playerId: 'daniboy', points: 10, category: 'proof_of_work', reason: 'Proof of work' },
+  { id: 'e009', date: '2026-06-19', playerId: 'miggy', points: 3, category: 'checkin', reason: 'Daily check-in' },
+  { id: 'e010', date: '2026-06-20', playerId: 'miggy', points: 3, category: 'checkin', reason: 'Daily check-in' },
+  { id: 'e011', date: '2026-06-20', playerId: 'daniboy', points: 3, category: 'checkin', reason: 'Daily check-in' },
+  { id: 'e012', date: '2026-06-20', playerId: 'kdawg', points: -25, category: 'red_card', reason: 'Red card' },
+  { id: 'e013', date: '2026-06-21', playerId: 'miggy', points: 3, category: 'checkin', reason: 'Daily check-in' },
+  { id: 'e014', date: '2026-06-21', playerId: 'daniboy', points: 3, category: 'checkin', reason: 'Daily check-in' },
+  { id: 'e015', date: '2026-06-21', playerId: 'kdawg', points: -10, category: 'missed_deadline', reason: 'Missed deadline' },
+  { id: 'e016', date: '2026-06-22', playerId: 'miggy', points: 3, category: 'checkin', reason: 'Daily check-in' },
+  { id: 'e017', date: '2026-06-23', playerId: 'miggy', points: 3, category: 'checkin', reason: 'Daily check-in' },
+  { id: 'e018', date: '2026-06-23', playerId: 'daniboy', points: 3, category: 'checkin', reason: 'Daily check-in' },
+];
+const data = { season: load('season.json'), players: load('players.json'), events: FIXTURE_EVENTS, config: load('config.json') };
 
 // Pin "today" so the test is deterministic regardless of the real clock.
 data.season = { ...data.season, asOf: '2026-06-23' };

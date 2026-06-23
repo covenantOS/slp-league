@@ -89,7 +89,7 @@ import '../../styles/global.css';
     </div>
 
     <div class="panel" id="panel" style="display:none">
-      <div class="topbrand"><span>SLP League · control room</span><a href="/">View the board</a></div>
+      <div class="topbrand"><span>SLP League · control room</span><a href="/seasons/">Seasons</a><a href="/" style="margin-left:14px">View the board</a></div>
       <div id="hdr"></div>
       <div class="grid" id="players"></div>
       <div class="feedwrap">
@@ -144,7 +144,7 @@ import '../../styles/global.css';
             el('div', null, [el('span', { class: 'lbl', text: 'Season' }), el('b', { text: STATE.season.name }), ' · ' + STATE.daysLeft + 'd left']),
             el('div', { class: 'hbtns' }, [
               el('button', { class: 'mini', 'data-act': 'setpot', text: 'Set pot' }),
-              el('button', { class: 'mini danger', 'data-act': 'reset', text: 'Reset season' }),
+              el('button', { class: 'mini danger', 'data-act': 'endseason', text: 'End season' }),
             ]),
           ]);
         }
@@ -211,8 +211,8 @@ import '../../styles/global.css';
             card.querySelector('.c-rsn').value = '';
           } else if (act === 'del') {
             if (confirm('Delete this entry?')) await mutate({ action: 'delete', id: t.dataset.id });
-          } else if (act === 'reset') {
-            if (confirm('Reset the season? This clears every point back to 100 for everyone.')) await mutate({ action: 'reset' });
+          } else if (act === 'endseason') {
+            if (confirm('End this season? The final standings get saved to the archive, then everyone resets to 100 for a new season.')) await mutate({ action: 'endSeason' });
           } else if (act === 'setpot') {
             var v = prompt('New pot size in dollars:', STATE.pot);
             if (v) await mutate({ action: 'setPot', potUSD: +v });

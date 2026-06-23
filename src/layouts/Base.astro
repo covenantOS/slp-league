@@ -6,7 +6,7 @@ import { getGame } from '../lib/league.mjs';
 interface Props {
   title?: string;
   description?: string;
-  active?: 'standings' | 'players' | 'history' | 'rules';
+  active?: 'standings' | 'players' | 'history' | 'seasons' | 'rules';
 }
 const { title, description, active } = Astro.props;
 const league = config.league;
@@ -18,6 +18,7 @@ const nav = [
   { key: 'standings', href: '/', label: 'Standings', icon: 'trophy' },
   { key: 'players', href: '/players/', label: 'Players', icon: 'users' },
   { key: 'history', href: '/history/', label: 'History', icon: 'history' },
+  { key: 'seasons', href: '/seasons/', label: 'Seasons', icon: 'archive' },
   { key: 'rules', href: '/rules/', label: 'How it works', icon: 'help-circle' },
 ];
 ---

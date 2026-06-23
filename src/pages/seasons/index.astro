@@ -1,0 +1,61 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getArchive } from '../../lib/league.mjs';
+import { money } from '../../lib/format.mjs';
+
+const archive = (await getArchive(Astro.locals?.runtime?.env)).slice().reverse(); // newest first
+---
+
+<Base title="Seasons" active="seasons">
+  <section class="hero">
+    <div class="eyebrow">The trophy cabinet</div>
+    <h1>Seasons</h1>
+  </section>
+
+  {
+    archive.length === 0 ? (
+      <div class="card card-pad empty">
+        No completed seasons yet. The current season is live on the <a href="/">board</a>. When you end a
+        season from the control room, its final standings get saved here for good.
+      </div>
+    ) : (
+      <div class="slist">
+        {archive.map((s: any) => (
+          <a class="scard card" href={`/seasons/${s.id}/`}>
+            <div class="s-top">
+              <div class="s-name display">{s.name}</div>
+              <div class="s-dates">{s.startDate} &rarr; {s.endedOn}</div>
+            </div>
+            <div class="s-champ">
+              <i class="ti ti-trophy" aria-hidden="true" />
+              {s.champion ? (
+                <span><b>{s.champion.nickname}</b> took home {money(s.champion.dollars)}</span>
+              ) : (
+                <span>No champion recorded</span>
+              )}
+            </div>
+            <div class="s-sub">{s.standings.length} players &middot; {money(s.potUSD)} pot</div>
+          </a>
+        ))}
+      </div>
+    )
+  }
+</Base>
+
+<style>
+  .hero { padding: 8px 0 6px; }
+  .hero h1 { margin-top: 6px; }
+  .empty { margin-top: 16px; color: var(--muted); font-size: 15px; line-height: 1.7; }
+  .empty a { color: var(--pitch); }
+  .slist { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 18px; }
+  .scard { padding: 18px 20px; transition: border-color 0.15s, transform 0.15s, background 0.15s; }
+  .scard:hover { border-color: var(--line-2); transform: translateY(-2px); background: var(--surface-2); }
+  .s-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .s-name { font-size: 24px; }
+  .s-dates { font-size: 12px; color: var(--faint); }
+  .s-champ { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 15px; }
+  .s-champ .ti { color: var(--gold); font-size: 20px; }
+  .s-champ b { font-family: var(--font-display); color: var(--gold); }
+  .s-sub { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  @media (max-width: 640px) { .slist { grid-template-columns: 1fr; } }
+</style>

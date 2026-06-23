@@ -1,10 +1,15 @@
 // Password-gated mutations for the admin panel. Reads/writes the KV-backed game.
-import { getGame, setGame } from '../../lib/store.mjs';
+import { getGame, setGame, getArchive, setArchive } from '../../lib/store.mjs';
 import { computeState } from '../../lib/engine.mjs';
 
 const PW = '4221';
 const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const today = () => new Date().toISOString().slice(0, 10);
+const addMonths = (dateStr, m) => {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCMonth(d.getUTCMonth() + m);
+  return d.toISOString().slice(0, 10);
+};
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
 
 function apply(game, b) {
@@ -29,13 +34,6 @@ function apply(game, b) {
       game.events = game.events.filter((e) => e.id !== b.id);
       return game.events.length === before ? 'event not found' : null;
     }
-    case 'reset': {
-      game.events = [];
-      if (isDate(b.startDate)) game.season.startDate = b.startDate;
-      if (isDate(b.endDate)) game.season.endDate = b.endDate;
-      if (b.name) game.season.name = String(b.name).slice(0, 40);
-      return null;
-    }
     case 'setPot': {
       const v = Math.round(Number(b.potUSD));
       const min = game.season.seedPoints * game.players.length;
@@ -58,6 +56,42 @@ export async function POST({ request, locals }) {
   if (body.pw !== PW) return json({ error: 'wrong password' }, 401);
   const env = locals?.runtime?.env;
   const game = await getGame(env);
+
+  if (body.action === 'endSeason') {
+    const final = computeState(game);
+    const snapshot = {
+      id: game.season.id,
+      name: game.season.name,
+      startDate: game.season.startDate,
+      endDate: game.season.endDate,
+      endedOn: today(),
+      potUSD: game.season.potUSD,
+      champion: final.players[0]
+        ? { playerId: final.players[0].id, nickname: final.players[0].nickname, dollars: final.players[0].dollars }
+        : null,
+      standings: final.players.map((p) => ({
+        playerId: p.id, nickname: p.nickname, color: p.color, initials: p.initials,
+        points: p.points, dollars: p.dollars, rank: p.rank, tier: p.tier.name,
+      })),
+      events: game.events,
+    };
+    const archive = await getArchive(env);
+    archive.push(snapshot);
+    await setArchive(env, archive);
+
+    const n = (parseInt(String(game.season.id).replace(/\D/g, ''), 10) || 1) + 1;
+    game.events = [];
+    game.season = {
+      ...game.season,
+      id: 'T' + n,
+      name: 'Season ' + n,
+      startDate: isDate(body.startDate) ? body.startDate : today(),
+      endDate: isDate(body.endDate) ? body.endDate : addMonths(today(), 6),
+    };
+    await setGame(env, game);
+    return json({ ok: true, state: computeState(game) });
+  }
+
   const err = apply(game, body);
   if (err) return json({ error: err }, 400);
   await setGame(env, game);

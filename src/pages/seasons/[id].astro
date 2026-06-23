@@ -1,0 +1,121 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getArchive } from '../../lib/league.mjs';
+import { ramp, money, signed, shortDate } from '../../lib/format.mjs';
+import config from '../../data/config.json';
+
+const { id } = Astro.params;
+const archive = await getArchive(Astro.locals?.runtime?.env);
+const s = archive.find((x: any) => x.id === id);
+if (!s) return Astro.redirect('/seasons/');
+
+const rubric = Object.fromEntries(config.rubric.map((c: any) => [c.key, c])) as Record<string, any>;
+const byId = Object.fromEntries(s.standings.map((p: any) => [p.playerId, p])) as Record<string, any>;
+const feed = [...s.events].sort((a: any, b: any) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? 1 : -1));
+---
+
+<Base title={s.name} active="seasons">
+  <a class="back" href="/seasons/"><i class="ti ti-arrow-left" aria-hidden="true"></i> All seasons</a>
+
+  <section class="shead card card-pad">
+    <div>
+      <div class="eyebrow">Final standings</div>
+      <h1 class="display">{s.name}</h1>
+      <div class="sdates">{s.startDate} &rarr; {s.endedOn} &middot; {money(s.potUSD)} pot</div>
+    </div>
+    {
+      s.champion && (
+        <div class="champ">
+          <i class="ti ti-trophy" aria-hidden="true" />
+          <div>
+            <div class="champ-l">Champion</div>
+            <div class="champ-n display">{s.champion.nickname}</div>
+            <div class="champ-d">{money(s.champion.dollars)}</div>
+          </div>
+        </div>
+      )
+    }
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Final table</h2></div>
+    {
+      s.standings.map((p: any) => {
+        const r = ramp(p.color);
+        return (
+          <div class={`trow card${p.rank === 1 ? ' win' : ''}`}>
+            <div class="rank display">{p.rank}</div>
+            <div class="t-av" style={`background:${r.fill};color:${r.ink}`}>{p.initials}</div>
+            <div class="t-who">
+              <span class="t-name display">{p.nickname}</span>
+              <span class="pill tier">{p.tier}</span>
+            </div>
+            <div class="t-amt display">{money(p.dollars)}</div>
+          </div>
+        );
+      })
+    }
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Season log</h2><span class="link">{s.events.length} entries</span></div>
+    <div class="card log">
+      {
+        feed.length === 0 ? (
+          <div class="logrow"><div class="lmain" style="color:var(--muted)">No events were logged.</div></div>
+        ) : (
+          feed.map((e: any, i: number) => {
+            const meta = rubric[e.category] || { label: e.category };
+            const pl = byId[e.playerId] || { nickname: e.playerId };
+            return (
+              <div class={`logrow${i > 0 ? ' br' : ''}`}>
+                <div class="lmain">
+                  <b class="display">{pl.nickname}</b> {e.reason}
+                  <span class="lsub">{shortDate(e.date)} &middot; {meta.label}</span>
+                </div>
+                <div class={`lpts ${e.points >= 0 ? 'pos' : 'neg'}`}>{signed(e.points)}</div>
+              </div>
+            );
+          })
+        )
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 500; margin-bottom: 14px; }
+  .back:hover { color: var(--pitch); }
+  .back .ti { font-size: 16px; }
+
+  .shead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .shead h1 { font-size: 30px; margin: 4px 0; }
+  .sdates { color: var(--muted); font-size: 13px; }
+  .champ { display: flex; align-items: center; gap: 12px; text-align: right; }
+  .champ .ti { font-size: 34px; color: var(--gold); }
+  .champ-l { font-size: 11px; text-transform: uppercase; letter-spacing: 1.4px; color: var(--muted); }
+  .champ-n { font-size: 22px; color: var(--gold); line-height: 1.1; }
+  .champ-d { font-size: 13px; color: var(--muted); }
+
+  .trow { display: grid; grid-template-columns: 34px 38px 1fr auto; align-items: center; gap: 14px; padding: 12px 16px; }
+  .trow + .trow { margin-top: 8px; }
+  .trow.win { border-color: rgba(246, 180, 0, 0.4); }
+  .rank { font-size: 22px; color: var(--muted); text-align: center; }
+  .trow.win .rank { color: var(--gold); }
+  .t-av { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 14px; }
+  .t-who { display: flex; align-items: center; gap: 9px; min-width: 0; flex-wrap: wrap; }
+  .t-name { font-size: 19px; }
+  .t-amt { font-size: 22px; }
+
+  .log { overflow: hidden; }
+  .logrow { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+  .logrow.br { border-top: 1px solid var(--line); }
+  .lmain { flex: 1; min-width: 0; font-size: 14px; }
+  .lmain b { margin-right: 6px; }
+  .lsub { color: var(--faint); font-size: 12px; margin-left: 8px; }
+  .lpts { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+  .lpts.pos { color: var(--pitch); }
+  .lpts.neg { color: var(--red); }
+
+  @media (max-width: 560px) { .shead { flex-direction: column; align-items: flex-start; } .champ { text-align: left; } }
+</style>
