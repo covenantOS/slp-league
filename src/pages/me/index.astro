@@ -70,6 +70,7 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
         };
         var ramp = function (c) { return RAMP[c] || RAMP.gray; };
         var S = { players: [], sel: null, authed: false, code: '', avatar: undefined, tagline: '' };
+        var busy = false;
 
         function el(tag, attrs, kids) {
           var n = document.createElement(tag);
@@ -95,6 +96,7 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
             img.onload = function () {
               var c = document.createElement('canvas'); c.width = size; c.height = size;
               var ctx = c.getContext('2d');
+              ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, size, size); // flatten transparency to white, not black
               var scale = Math.max(size / img.width, size / img.height);
               var w = img.width * scale, h = img.height * scale;
               ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
@@ -106,9 +108,14 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
           });
         }
         async function api(payload) {
-          var res = await fetch('/api/profile', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
-          var data = await res.json();
-          return { ok: res.ok, data: data };
+          try {
+            var res = await fetch('/api/profile', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+            var data = {};
+            try { data = await res.json(); } catch (e) {}
+            return { ok: res.ok, data: data };
+          } catch (e) {
+            return { ok: false, data: { error: 'Network error. Try again.' } };
+          }
         }
 
         function render() {
@@ -132,16 +139,21 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
         }
 
         function codeStep() {
-          var input = el('input', { class: 'code', type: 'password', inputmode: 'numeric', maxlength: '8', placeholder: 'code', autocomplete: 'off' });
+          var input = el('input', { class: 'code', type: 'password', 'aria-label': 'Your 4 to 8 digit code', inputmode: 'numeric', maxlength: '8', placeholder: 'code', autocomplete: 'off' });
           var err = el('div', { class: 'err' });
           var go = async function () {
+            if (busy) return;
             var code = input.value.trim();
             if (!/^\d{4,8}$/.test(code)) { err.textContent = 'Use 4 to 8 digits.'; return; }
-            var r = await api({ playerId: S.sel.id, code: code });
-            if (!r.ok) { err.textContent = r.data.error || 'Could not continue'; input.value = ''; return; }
-            S.authed = true; S.code = code; S.sel = r.data.player; S.tagline = r.data.player.tagline || ''; render();
+            busy = true;
+            try {
+              var r = await api({ playerId: S.sel.id, code: code });
+              if (!r.ok) { err.textContent = r.data.error || 'Could not continue'; input.value = ''; return; }
+              S.authed = true; S.code = code; S.sel = r.data.player; S.tagline = r.data.player.tagline || ''; render();
+            } finally { busy = false; }
           };
           input.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+          requestAnimationFrame(function () { input.focus(); });
           return el('div', { class: 'step-card' }, [
             avatarNode(S.sel, 'av-md'),
             el('h1', { text: S.sel.nickname, style: 'text-align:center;margin-top:10px' }),
@@ -158,8 +170,8 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
           var preview = avatarNode(S.sel, 'av-lg', S.avatar);
           var fileInput = el('input', { type: 'file', accept: 'image/*', style: 'display:none' });
           var dz = el('div', { class: 'dropzone' }, [el('div', { style: 'font-weight:500', text: 'Drop a photo or click to choose' }), el('div', { class: 'hint', text: 'Square works best. It gets cropped and shrunk automatically.' })]);
-          var tagline = el('input', { type: 'text', maxlength: '80', value: S.tagline || '', placeholder: 'e.g. Closer. Caffeine. Page-one rankings.' });
-          var newCode = el('input', { class: 'code', type: 'password', inputmode: 'numeric', maxlength: '8', placeholder: 'leave blank to keep' });
+          var tagline = el('input', { id: 'taglineInput', type: 'text', maxlength: '80', value: S.tagline || '', placeholder: 'e.g. Closer. Caffeine. Page-one rankings.' });
+          var newCode = el('input', { id: 'newcodeInput', class: 'code', type: 'password', 'aria-label': 'New code, optional', inputmode: 'numeric', maxlength: '8', placeholder: 'leave blank to keep' });
           var err = el('div', { class: 'err' });
 
           var setFile = function (file) {
@@ -169,7 +181,7 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
             }).catch(function () { err.textContent = 'Could not read that image.'; });
           };
           dz.addEventListener('click', function () { fileInput.click(); });
-          fileInput.addEventListener('change', function () { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+          fileInput.addEventListener('change', function () { if (fileInput.files[0]) setFile(fileInput.files[0]); fileInput.value = ''; });
           dz.addEventListener('dragover', function (e) { e.preventDefault(); dz.classList.add('over'); });
           dz.addEventListener('dragleave', function () { dz.classList.remove('over'); });
           dz.addEventListener('drop', function (e) { e.preventDefault(); dz.classList.remove('over'); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
@@ -177,22 +189,26 @@ const persistent = !!(Astro.locals?.runtime?.env?.LEAGUE);
           var removeBtn = el('button', { class: 'removelink', text: 'Remove photo', on: { click: function () { S.avatar = null; var fresh = avatarNode(S.sel, 'av-lg', null); preview.replaceWith(fresh); preview = fresh; } } });
 
           var save = async function () {
-            var payload = { playerId: S.sel.id, code: S.code, tagline: tagline.value };
-            if (S.avatar !== undefined) payload.avatar = S.avatar;
-            if (newCode.value.trim()) payload.newCode = newCode.value.trim();
+            if (busy) return;
+            busy = true;
             err.textContent = 'Saving...';
-            var r = await api(payload);
-            if (!r.ok) { err.textContent = r.data.error || 'Could not save'; return; }
-            if (newCode.value.trim()) S.code = newCode.value.trim();
-            S.sel = r.data.player; S.avatar = undefined;
-            app.replaceChildren(doneStep());
+            try {
+              var payload = { playerId: S.sel.id, code: S.code, tagline: tagline.value };
+              if (S.avatar !== undefined) payload.avatar = S.avatar;
+              if (newCode.value.trim()) payload.newCode = newCode.value.trim();
+              var r = await api(payload);
+              if (!r.ok) { err.textContent = r.data.error || 'Could not save'; return; }
+              if (newCode.value.trim()) S.code = newCode.value.trim();
+              S.sel = r.data.player; S.avatar = undefined;
+              app.replaceChildren(doneStep());
+            } finally { busy = false; }
           };
 
           return el('div', { class: 'step-card' }, [
             el('div', { style: 'text-align:center' }, [preview, removeBtn]),
             fileInput, dz,
-            el('div', { class: 'field' }, [el('label', { text: 'Tagline' }), tagline]),
-            el('div', { class: 'field' }, [el('label', { text: 'Change your code (optional)' }), newCode]),
+            el('div', { class: 'field' }, [el('label', { for: 'taglineInput', text: 'Tagline' }), tagline]),
+            el('div', { class: 'field' }, [el('label', { for: 'newcodeInput', text: 'Change your code (optional)' }), newCode]),
             err,
             el('div', { class: 'row' }, [
               el('button', { class: 'btn ghost', text: 'Switch player', on: { click: function () { S.sel = null; S.authed = false; S.avatar = undefined; render(); } } }),

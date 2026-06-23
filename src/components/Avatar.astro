@@ -8,17 +8,24 @@ interface Props {
 const { player, size = 42, radius = 12 } = Astro.props;
 const r = ramp(player.color);
 const dim = `width:${size}px;height:${size}px;border-radius:${radius}px`;
+const fontSize = Math.round(size * 0.36);
 ---
-{
-  player.avatar ? (
-    <img src={player.avatar} alt={player.nickname} class="av-img" style={`${dim};object-fit:cover;display:block`} />
-  ) : (
-    <div class="av-ini" style={`${dim};background:${r.fill};color:${r.ink};font-size:${Math.round(size * 0.36)}px`}>
-      {player.initials}
-    </div>
-  )
-}
+<div class="av-wrap" style={`${dim};position:relative;flex:none`}>
+  <div class="av-ini" style={`${dim};background:${r.fill};color:${r.ink};font-size:${fontSize}px;position:absolute;inset:0`}>
+    {player.initials}
+  </div>
+  {
+    player.avatar && (
+      <img
+        src={player.avatar}
+        alt={player.nickname}
+        class="av-img"
+        style={`${dim};object-fit:cover;position:absolute;inset:0;display:block;background:${r.fill}`}
+        onerror="this.style.display='none'"
+      />
+    )
+  }
+</div>
 <style>
-  .av-ini { display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; letter-spacing: 0.5px; flex: none; }
-  .av-img { flex: none; }
+  .av-ini { display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; letter-spacing: 0.5px; }
 </style>

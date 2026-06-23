@@ -29,7 +29,7 @@ export async function POST({ request, locals }) {
   if (b.avatar === null) {
     p.avatar = null;
   } else if (typeof b.avatar === 'string') {
-    if (!/^data:image\/(png|jpeg|webp);base64,/.test(b.avatar) || b.avatar.length > 400000) {
+    if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(b.avatar) || b.avatar.length > 400000) {
       return json({ error: 'image must be a small PNG/JPEG/WebP' }, 400);
     }
     p.avatar = b.avatar;

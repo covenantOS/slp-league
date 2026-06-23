@@ -150,7 +150,12 @@ export function computeState(data) {
 
 /** Flat newest-first activity feed with the player object attached. */
 export function activityFeed(data, limit) {
-  const byId = new Map(data.players.map((p) => [p.id, p]));
+  const byId = new Map(
+    data.players.map((p) => {
+      const { passcode, ...pub } = p; // never let a passcode ride along on a feed item
+      return [p.id, { ...pub, hasCode: !!passcode }];
+    }),
+  );
   const feed = data.events
     .map((e, i) => ({ e, i }))
     .sort((a, b) => {
